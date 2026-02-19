@@ -46,7 +46,7 @@ export function nextFlagsTarget() {
   }
   flagsState.current = flagsState.queue.shift();
   const alpha2 = ISO_ALPHA2[flagsState.current];
-  document.getElementById("flags-img").src = `https://flagcdn.com/w320/${alpha2}.png`;
+  document.getElementById("flags-img").src = `/flags/${alpha2}.png`;
   const done = flagsState.found.size + flagsState.skipped;
   document.getElementById("flags-progress").textContent = `${done + 1} / ${TOTAL}`;
 }

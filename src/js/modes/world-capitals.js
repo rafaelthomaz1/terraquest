@@ -47,7 +47,7 @@ export function nextCapitalsTarget() {
   capitalsState.current = capitalsState.queue.shift();
   const alpha2 = ISO_ALPHA2[capitalsState.current];
   document.getElementById("capitals-country").textContent = COUNTRIES[capitalsState.current];
-  document.getElementById("capitals-flag").src = `https://flagcdn.com/w80/${alpha2}.png`;
+  document.getElementById("capitals-flag").src = `/flags/${alpha2}.png`;
   const done = capitalsState.found.size + capitalsState.skipped;
   document.getElementById("capitals-progress").textContent = `${done + 1} / ${TOTAL}`;
 }

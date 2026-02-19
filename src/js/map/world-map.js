@@ -5,6 +5,7 @@ import { makeHint } from '../utils/normalize.js';
 import { showFeedbackMsg } from '../utils/dom.js';
 import { handleClickModeClick } from '../modes/world-click.js';
 
+// ── Map initialization ──────────────────────────────────────────────────────
 export function initWorldMap() {
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -149,17 +150,23 @@ export function initWorldMap() {
 export function renderMap() {
   worldMap.g.selectAll(".country-path").attr("d", worldMap.path);
   worldMap.g.selectAll(".border-path").attr("d", worldMap.path);
-  worldMap.defs.selectAll("pattern[id^='flag-']").each(function() {
-    const patId = this.id;
-    const countryId = patId.replace("flag-", "");
+
+  // Update flag overlays: re-clone clip paths and reposition images
+  worldMap.defs.selectAll("clipPath[id^='clip-']").each(function() {
+    const countryId = this.id.replace("clip-", "");
+    const el = worldMap.pathMap[countryId];
+    if (!el) return;
+    while (this.firstChild) this.removeChild(this.firstChild);
+    this.appendChild(el.node().cloneNode(true));
+  });
+  worldMap.g.selectAll(".flag-overlay").each(function() {
+    const countryId = this.getAttribute("data-country");
     const el = worldMap.pathMap[countryId];
     if (!el) return;
     const bbox = el.node().getBBox();
-    const pat = d3.select(this);
-    pat.attr("x", bbox.x).attr("y", bbox.y)
-       .attr("width", bbox.width).attr("height", bbox.height);
-    pat.select("rect").attr("width", bbox.width).attr("height", bbox.height);
-    pat.select("image").attr("width", bbox.width).attr("height", bbox.height);
+    d3.select(this)
+      .attr("x", bbox.x).attr("y", bbox.y)
+      .attr("width", bbox.width).attr("height", bbox.height);
   });
 }
 
@@ -170,34 +177,40 @@ function showHint(name) {
   game.hintTimeout = setTimeout(() => { refs.hintDisplay.style.opacity = 0; }, 4000);
 }
 
+// ── Reveal country with flag clipped to shape ───────────────────────────────
+// Uses clipPath + <image> overlay instead of <pattern> for cross-browser support.
 export function revealCountry(id, color, flash) {
   const el = worldMap.pathMap[id];
   if (!el) return;
   const alpha2 = ISO_ALPHA2[id];
 
   const applyFill = () => {
-    if (alpha2) {
-      const bbox = el.node().getBBox();
-      const patId = `flag-${id}`;
-      const pat = worldMap.defs.append("pattern")
-        .attr("id", patId)
-        .attr("patternUnits", "userSpaceOnUse")
-        .attr("x", bbox.x).attr("y", bbox.y)
-        .attr("width", bbox.width).attr("height", bbox.height);
-      pat.append("rect")
-        .attr("width", bbox.width).attr("height", bbox.height)
-        .attr("fill", color);
-      pat.append("image")
-        .attr("href", `https://flagcdn.com/w640/${alpha2}.png`)
-        .attr("x", 0).attr("y", 0)
-        .attr("width", bbox.width).attr("height", bbox.height)
-        .attr("preserveAspectRatio", "xMidYMid slice");
-      el.style("fill", `url(#${patId})`);
-    } else {
-      el.style("fill", color);
-    }
+    // Fill country with continent color
+    el.style("fill", color);
     el.classed("country-found", true);
     el.style("stroke", "#fff").style("stroke-width", "0.8px");
+
+    if (alpha2) {
+      const bbox = el.node().getBBox();
+      const clipId = `clip-${id}`;
+      const flagUrl = `/flags/${alpha2}.png`;
+
+      // Create clipPath from country shape
+      const clip = worldMap.defs.append("clipPath").attr("id", clipId);
+      clip.node().appendChild(el.node().cloneNode(true));
+
+      // Add flag image clipped to country shape (on top of the colored path)
+      worldMap.g.append("image")
+        .attr("class", "flag-overlay")
+        .attr("data-country", id)
+        .attr("xlink:href", flagUrl)
+        .attr("href", flagUrl)
+        .attr("x", bbox.x).attr("y", bbox.y)
+        .attr("width", bbox.width).attr("height", bbox.height)
+        .attr("preserveAspectRatio", "xMidYMid slice")
+        .attr("clip-path", `url(#${clipId})`)
+        .style("pointer-events", "none");
+    }
   };
 
   if (flash) {

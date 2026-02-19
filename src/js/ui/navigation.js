@@ -104,6 +104,8 @@ export function resetGame() {
     if (leg) leg.classList.remove("complete");
   });
   worldMap.defs.selectAll("pattern[id^='flag-']").remove();
+  worldMap.defs.selectAll("clipPath[id^='clip-']").remove();
+  worldMap.g.selectAll(".flag-overlay").remove();
   Object.values(worldMap.pathMap).forEach(el => {
     el.style("fill", null);
     el.style("stroke", null).style("stroke-width", null);
