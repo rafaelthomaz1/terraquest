@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terra Quest - Jogo de Geografia</title>
+
+<!-- Security -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<!-- SEO -->
+<meta name="description" content="Terra Quest - Teste seus conhecimentos de geografia! 195 paises, 27 estados brasileiros, 51 estados americanos e 9 modos de jogo.">
+<meta name="keywords" content="geografia, quiz, paises, estados, capitais, bandeiras, mapa, jogo educativo">
+<meta name="author" content="Terra Quest">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Terra Quest - Jogo de Geografia">
+<meta property="og:description" content="Teste seus conhecimentos de geografia com 9 modos de jogo diferentes!">
+<meta property="og:image" content="/globo.png">
+<meta property="og:type" content="website">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Terra Quest - Jogo de Geografia">
+<meta name="twitter:description" content="Teste seus conhecimentos de geografia com 9 modos de jogo diferentes!">
+<meta name="twitter:image" content="/globo.png">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="/globo.png">
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#3fb950">
+
+<!-- Preconnect to critical CDNs -->
+<link rel="preconnect" href="https://d3js.org" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://flagcdn.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<!-- Preload critical resources -->
+<link rel="preload" href="https://d3js.org/d3.v7.min.js" as="script" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<button id="theme-toggle" title="Alternar tema"><span id="theme-icon">&#x1F319;</span><span id="theme-label">Dark Mode</span></button>
+
+<div id="home-screen">
+  <img class="home-globe" src="/globo.png" alt="Terra Quest" width="120" height="120">
+  <div class="home-title">Terra Quest</div>
+  <div class="home-subtitle">Teste seus conhecimentos de geografia!</div>
+  <button class="play-btn" id="play-btn">JOGAR</button>
+</div>
+
+<div id="select-screen">
+  <button class="back-btn" id="back-btn">&larr; Voltar</button>
+  <div class="select-title">Escolha um Modo</div>
+  <div class="select-subtitle">Selecione o desafio que deseja jogar</div>
+  <div class="select-section">
+    <div class="select-section-title">&#x1F30D; Mundo</div>
+    <div class="mode-cards-grid">
+      <div class="mode-card" data-mode="world-type">
+        <div class="mode-card-icon">&#x2328;&#xFE0F;</div>
+        <div class="mode-card-title">Digite os Pa&#xED;ses</div>
+        <div class="mode-card-desc">Digite os nomes dos 195 pa&#xED;ses</div>
+      </div>
+      <div class="mode-card" data-mode="world-click">
+        <div class="mode-card-icon">&#x1F5B1;&#xFE0F;</div>
+        <div class="mode-card-title">Encontre os Pa&#xED;ses</div>
+        <div class="mode-card-desc">Clique no pa&#xED;s indicado no mapa</div>
+      </div>
+      <div class="mode-card" data-mode="world-flags">
+        <div class="mode-card-icon">&#x1F3F3;&#xFE0F;</div>
+        <div class="mode-card-title">Bandeiras</div>
+        <div class="mode-card-desc">Identifique o pa&#xED;s pela bandeira</div>
+      </div>
+      <div class="mode-card" data-mode="world-capitals">
+        <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
+        <div class="mode-card-title">Capitais</div>
+        <div class="mode-card-desc">Digite a capital de cada pa&#xED;s</div>
+      </div>
+      <div class="mode-card" data-mode="world-languages">
+        <div class="mode-card-icon">&#x1F5E3;&#xFE0F;</div>
+        <div class="mode-card-title">L&#xED;nguas</div>
+        <div class="mode-card-desc">Encontre os pa&#xED;ses de cada l&#xED;ngua</div>
+      </div>
+    </div>
+  </div>
+  <div class="select-sections-row">
+    <div class="select-section">
+      <div class="select-section-title">&#x1F1E7;&#x1F1F7; Brasil</div>
+      <div class="mode-cards-grid">
+        <div class="mode-card" data-mode="br-states">
+          <div class="mode-card-icon">&#x1F5FA;&#xFE0F;</div>
+          <div class="mode-card-title">Estados</div>
+          <div class="mode-card-desc">Digite os 27 estados brasileiros</div>
+        </div>
+        <div class="mode-card" data-mode="br-capitals">
+          <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
+          <div class="mode-card-title">Capitais</div>
+          <div class="mode-card-desc">Digite as capitais dos 27 estados</div>
+        </div>
+      </div>
+    </div>
+    <div class="select-section">
+      <div class="select-section-title">&#x1F1FA;&#x1F1F8; EUA</div>
+      <div class="mode-cards-grid">
+        <div class="mode-card" data-mode="us-states">
+          <div class="mode-card-icon">&#x1F5FA;&#xFE0F;</div>
+          <div class="mode-card-title">Estados</div>
+          <div class="mode-card-desc">Digite os 51 estados americanos</div>
+        </div>
+        <div class="mode-card" data-mode="us-capitals">
+          <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
+          <div class="mode-card-title">Capitais</div>
+          <div class="mode-card-desc">Digite as capitais dos 51 estados</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button id="menu-btn">MENU</button>
+
+<div id="click-prompt">
+  <span>Clique em: </span>
+  <span id="click-target-name">---</span>
+  <div id="click-score-display">
+    <span id="click-correct">&#x2713; 0</span>
+    <span id="click-skipped">&#x27F6; 0</span>
+    <span id="click-incorrect">&#x2717; 0</span>
+    <span id="click-remaining">&#x23F3; 195</span>
+  </div>
+  <button id="click-skip-btn">Pular</button>
+  <button id="click-give-up-btn">Desistir</button>
+</div>
+
+<div id="flags-banner" class="game-banner">
+  <img id="flags-img" src="" alt="Bandeira">
+  <div>
+    <div class="banner-text" id="flags-progress">1 / 195</div>
+  </div>
+</div>
+
+<div id="capitals-banner" class="game-banner">
+  <div>
+    <div class="banner-country" id="capitals-country">---</div>
+    <div class="banner-progress" id="capitals-progress">1 / 195</div>
+  </div>
+  <img id="capitals-flag" class="banner-mini-flag" src="" alt="">
+</div>
+
+<div id="lang-banner" class="game-banner">
+  <div>
+    <div class="banner-text" id="lang-name">---</div>
+    <div class="banner-progress" id="lang-progress">L&#xED;ngua 1 / ? &#x2014; Faltam ? pa&#xED;ses</div>
+  </div>
+</div>
+
+<div id="world-panel">
+<div id="top-bar">
+  <div id="score-display">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
+    <div id="score-text"><span id="score-num">0</span> / <span id="score-total">195</span></div>
+  </div>
+</div>
+
+<div id="progress-container"><div id="progress-bar"></div></div>
+<div id="map-container"></div>
+</div>
+
+<div id="states-panel">
+<div id="states-map-container"></div>
+</div>
+
+<div id="states-score-display">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+  <div id="states-score-text"><span id="states-score-num">0</span> / <span id="states-total-num">27</span></div>
+</div>
+
+<div id="states-progress-container"><div id="states-progress-bar"></div></div>
+
+<div id="states-input-container">
+  <input type="text" id="state-input" placeholder="Digite o nome de um estado..." autocomplete="off" maxlength="100">
+  <button id="states-give-up-btn">Desistir</button>
+</div>
+
+<div id="states-hint-display"></div>
+<div id="states-feedback"></div>
+
+<div id="states-region-legend"></div>
+
+<div id="input-container">
+  <input type="text" id="country-input" placeholder="Digite o nome de um pa&#xED;s..." autocomplete="off" maxlength="100">
+  <button id="flags-skip-btn" class="skip-btn" style="display:none">Pular</button>
+  <button id="capitals-skip-btn" class="skip-btn" style="display:none">Pular</button>
+  <button id="lang-skip-btn" class="skip-btn" style="display:none">Pular L&#xED;ngua</button>
+  <button id="give-up-btn">Desistir</button>
+</div>
+
+<div id="hint-display"></div>
+<div id="feedback"></div>
+<div id="tooltip"></div>
+
+<div id="continent-legend">
+  <div class="legend-item" id="leg-AF"><div class="legend-dot" style="background:#f97316"></div>&#xC1;frica<span class="legend-count" id="count-AF">0/0</span></div>
+  <div class="legend-item" id="leg-NA"><div class="legend-dot" style="background:#22c55e"></div>Am. Norte<span class="legend-count" id="count-NA">0/0</span></div>
+  <div class="legend-item" id="leg-CA"><div class="legend-dot" style="background:#eab308"></div>Am. Central<span class="legend-count" id="count-CA">0/0</span></div>
+  <div class="legend-item" id="leg-SA"><div class="legend-dot" style="background:#10b981"></div>Am. Sul<span class="legend-count" id="count-SA">0/0</span></div>
+  <div class="legend-item" id="leg-AS"><div class="legend-dot" style="background:#a855f7"></div>&#xC1;sia<span class="legend-count" id="count-AS">0/0</span></div>
+  <div class="legend-item" id="leg-EU"><div class="legend-dot" style="background:#3b82f6"></div>Europa<span class="legend-count" id="count-EU">0/0</span></div>
+  <div class="legend-item" id="leg-OC"><div class="legend-dot" style="background:#06b6d4"></div>Oceania<span class="legend-count" id="count-OC">0/0</span></div>
+</div>
+
+<div id="continent-celebration">
+  <div id="celeb-flash"></div>
+  <div id="celeb-content">
+    <div class="celeb-icon" id="celeb-icon"></div>
+    <div class="celeb-title" id="celeb-title"></div>
+    <div class="celeb-sub" id="celeb-sub"></div>
+  </div>
+</div>
+
+<div id="victory-overlay">
+  <div id="victory-content">
+    <h1>Parab&#xE9;ns!</h1>
+    <p>Voc&#xEA; encontrou todos os 195 pa&#xED;ses!</p>
+    <button class="restart-btn" id="restart-btn">Jogar Novamente</button>
+    <br><button class="mode-switch-btn" id="mode-switch-btn-v">Trocar Modo</button>
+  </div>
+</div>
+
+<div id="gameover-overlay">
+  <div id="gameover-content">
+    <h1>Fim de Jogo</h1>
+    <div class="go-score" id="go-score">0</div>
+    <div class="go-label">de 195 pa&#xED;ses encontrados</div>
+    <div id="gameover-breakdown"></div>
+    <button class="restart-btn" id="restart-btn-go">Jogar Novamente</button>
+    <br><button class="mode-switch-btn" id="mode-switch-btn-go">Trocar Modo</button>
+  </div>
+</div>
+
+<button id="review-btn">Ver Resultado</button>
+<div id="review-legend">
+  <div class="review-legend-item"><div class="review-legend-swatch" style="border:2.5px solid #fbbf24;background:rgba(251,191,36,0.15);box-shadow:0 0 10px rgba(251,191,36,0.5)"></div>Acertou</div>
+  <div class="review-legend-item"><div class="review-legend-swatch" style="border:2px solid #94a3b8;background:rgba(148,163,184,0.15)"></div>Para estudar</div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

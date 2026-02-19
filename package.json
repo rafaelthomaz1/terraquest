@@ -1,0 +1,15 @@
+{
+  "name": "terraquest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Terra Quest - Jogo de geografia com 195 paises, 27 estados BR, 51 estados US e 9 modos de jogo",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0"
+  }
+}

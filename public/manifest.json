@@ -1,0 +1,17 @@
+{
+  "name": "Terra Quest - Jogo de Geografia",
+  "short_name": "Terra Quest",
+  "description": "Teste seus conhecimentos de geografia com 9 modos de jogo!",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#3fb950",
+  "icons": [
+    {
+      "src": "/globo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
