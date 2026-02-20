@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Terra Quest - Jogo de Geografia</title>
+<title>Terra Quest - Estudos de Geografia</title>
 
 <!-- Security -->
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -11,20 +11,20 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <!-- SEO -->
-<meta name="description" content="Terra Quest - Teste seus conhecimentos de geografia! 195 paises, 27 estados brasileiros, 51 estados americanos e 9 modos de jogo.">
-<meta name="keywords" content="geografia, quiz, paises, estados, capitais, bandeiras, mapa, jogo educativo">
+<meta name="description" content="Terra Quest - Aprenda geografia praticando! 195 países, 27 estados brasileiros, 51 estados americanos e 15 módulos de estudo.">
+<meta name="keywords" content="geografia, estudo, aprendizado, países, estados, capitais, bandeiras, mapa, plataforma educacional">
 <meta name="author" content="Terra Quest">
 
 <!-- Open Graph -->
-<meta property="og:title" content="Terra Quest - Jogo de Geografia">
-<meta property="og:description" content="Teste seus conhecimentos de geografia com 9 modos de jogo diferentes!">
+<meta property="og:title" content="Terra Quest - Estudos de Geografia">
+<meta property="og:description" content="Aprenda e pratique geografia com 15 módulos de estudo!">
 <meta property="og:image" content="/globo.png">
 <meta property="og:type" content="website">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Terra Quest - Jogo de Geografia">
-<meta name="twitter:description" content="Teste seus conhecimentos de geografia com 9 modos de jogo diferentes!">
+<meta name="twitter:title" content="Terra Quest - Estudos de Geografia">
+<meta name="twitter:description" content="Aprenda e pratique geografia com 15 módulos de estudo!">
 <meta name="twitter:image" content="/globo.png">
 
 <!-- Favicon -->
@@ -47,84 +47,81 @@
 </head>
 <body>
 
-<button id="theme-toggle" title="Alternar tema"><span id="theme-icon">&#x1F319;</span><span id="theme-label">Dark Mode</span></button>
+<div id="top-right-controls">
+<button id="menu-btn">MENU</button>
+<button id="theme-toggle" title="Alternar tema"><span id="theme-icon">&#x1F319;</span><span id="theme-label">Modo Escuro</span></button>
+<button id="difficulty-toggle" title="Alternar dificuldade"><span id="difficulty-label">&#x1F7E2; Modo F&#xE1;cil</span><span class="difficulty-tooltip"><b>&#x1F7E2; Modo F&#xE1;cil</b>: segunda chance nos modos game. <b>&#x1F534; Modo Dif&#xED;cil</b>: sem segunda chance — erre e o streak zera. <b>&#x1F4D6; Aprendizado</b>: sem elimina&#xE7;&#xE3;o — jogue sem parar para praticar.</span></button>
+</div>
 
 <div id="home-screen">
-  <img class="home-globe" src="/globo.png" alt="Terra Quest" width="120" height="120">
+  <canvas id="home-particles"></canvas>
+  <img class="home-globe" src="/globo.png" alt="Terra Quest" width="180" height="180">
   <div class="home-title">Terra Quest</div>
-  <div class="home-subtitle">Teste seus conhecimentos de geografia!</div>
-  <button class="play-btn" id="play-btn">JOGAR</button>
+  <div class="home-subtitle" id="home-subtitle"></div>
+  <button class="play-btn" id="play-btn">COMEÇAR</button>
+  <button class="guidelines-btn" id="guidelines-btn">DIRETRIZES</button>
 </div>
 
 <div id="select-screen">
   <button class="back-btn" id="back-btn">&larr; Voltar</button>
-  <div class="select-title">Escolha um Modo</div>
-  <div class="select-subtitle">Selecione o desafio que deseja jogar</div>
+  <div class="select-title">Módulos de Estudo</div>
+  <div class="select-subtitle">Escolha uma atividade para praticar</div>
   <div class="select-section">
     <div class="select-section-title">&#x1F30D; Mundo</div>
     <div class="mode-cards-grid">
       <div class="mode-card" data-mode="world-type">
         <div class="mode-card-icon">&#x2328;&#xFE0F;</div>
-        <div class="mode-card-title">Digite os Pa&#xED;ses</div>
-        <div class="mode-card-desc">Digite os nomes dos 195 pa&#xED;ses</div>
+        <div class="mode-card-title">Nomear Pa&#xED;ses</div>
+        <div class="mode-card-desc">Pratique os nomes dos 195 pa&#xED;ses do mundo</div>
       </div>
       <div class="mode-card" data-mode="world-click">
         <div class="mode-card-icon">&#x1F5B1;&#xFE0F;</div>
-        <div class="mode-card-title">Encontre os Pa&#xED;ses</div>
-        <div class="mode-card-desc">Clique no pa&#xED;s indicado no mapa</div>
+        <div class="mode-card-title">Localizar no Mapa</div>
+        <div class="mode-card-desc">Identifique a posi&#xE7;&#xE3;o de cada pa&#xED;s no mapa</div>
       </div>
       <div class="mode-card" data-mode="world-flags">
         <div class="mode-card-icon">&#x1F3F3;&#xFE0F;</div>
-        <div class="mode-card-title">Bandeiras</div>
-        <div class="mode-card-desc">Identifique o pa&#xED;s pela bandeira</div>
+        <div class="mode-card-title">Reconhecer Bandeiras</div>
+        <div class="mode-card-desc">Aprenda as bandeiras dos 195 pa&#xED;ses</div>
       </div>
       <div class="mode-card" data-mode="world-capitals">
         <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
-        <div class="mode-card-title">Capitais</div>
-        <div class="mode-card-desc">Digite a capital de cada pa&#xED;s</div>
+        <div class="mode-card-title">Capitais do Mundo</div>
+        <div class="mode-card-desc">Aprenda as capitais dos 195 pa&#xED;ses</div>
       </div>
       <div class="mode-card" data-mode="world-languages">
         <div class="mode-card-icon">&#x1F5E3;&#xFE0F;</div>
-        <div class="mode-card-title">L&#xED;nguas</div>
-        <div class="mode-card-desc">Encontre os pa&#xED;ses de cada l&#xED;ngua</div>
+        <div class="mode-card-title">L&#xED;nguas do Mundo</div>
+        <div class="mode-card-desc">Associe pa&#xED;ses aos seus idiomas oficiais</div>
       </div>
-    </div>
-  </div>
-  <div class="select-sections-row">
-    <div class="select-section">
-      <div class="select-section-title">&#x1F1E7;&#x1F1F7; Brasil</div>
-      <div class="mode-cards-grid">
-        <div class="mode-card" data-mode="br-states">
-          <div class="mode-card-icon">&#x1F5FA;&#xFE0F;</div>
-          <div class="mode-card-title">Estados</div>
-          <div class="mode-card-desc">Digite os 27 estados brasileiros</div>
-        </div>
-        <div class="mode-card" data-mode="br-capitals">
-          <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
-          <div class="mode-card-title">Capitais</div>
-          <div class="mode-card-desc">Digite as capitais dos 27 estados</div>
-        </div>
+      <div class="mode-card" data-mode="world-walk">
+        <div class="mode-card-icon">&#x1F6A9;</div>
+        <div class="mode-card-title">Rota entre Fronteiras</div>
+        <div class="mode-card-desc">Conecte dois pa&#xED;ses por pa&#xED;ses vizinhos</div>
       </div>
-    </div>
-    <div class="select-section">
-      <div class="select-section-title">&#x1F1FA;&#x1F1F8; EUA</div>
-      <div class="mode-cards-grid">
-        <div class="mode-card" data-mode="us-states">
-          <div class="mode-card-icon">&#x1F5FA;&#xFE0F;</div>
-          <div class="mode-card-title">Estados</div>
-          <div class="mode-card-desc">Digite os 51 estados americanos</div>
-        </div>
-        <div class="mode-card" data-mode="us-capitals">
-          <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
-          <div class="mode-card-title">Capitais</div>
-          <div class="mode-card-desc">Digite as capitais dos 51 estados</div>
-        </div>
+      <div class="mode-card" data-mode="world-silhouettes">
+        <div class="mode-card-icon">&#x1F5FA;&#xFE0F;</div>
+        <div class="mode-card-title">Silhuetas</div>
+        <div class="mode-card-desc">Identifique pa&#xED;ses pelo contorno</div>
+      </div>
+      <div class="mode-card" data-mode="world-population">
+        <div class="mode-card-icon">&#x1F4CA;</div>
+        <div class="mode-card-title">Popula&#xE7;&#xE3;o</div>
+        <div class="mode-card-desc">Qual pa&#xED;s tem mais popula&#xE7;&#xE3;o?</div>
+      </div>
+      <div class="mode-card" data-mode="study-br">
+        <div class="mode-card-silhouette" id="silhouette-card-br"></div>
+        <div class="mode-card-title">Estudar o Brasil</div>
+        <div class="mode-card-desc">27 estados e capitais brasileiras</div>
+      </div>
+      <div class="mode-card" data-mode="study-us">
+        <div class="mode-card-silhouette" id="silhouette-card-us"></div>
+        <div class="mode-card-title">Estudar os EUA</div>
+        <div class="mode-card-desc">51 estados e capitais americanas</div>
       </div>
     </div>
   </div>
 </div>
-
-<button id="menu-btn">MENU</button>
 
 <div id="click-prompt">
   <span>Clique em: </span>
@@ -135,8 +132,8 @@
     <span id="click-incorrect">&#x2717; 0</span>
     <span id="click-remaining">&#x23F3; 195</span>
   </div>
-  <button id="click-skip-btn">Pular</button>
-  <button id="click-give-up-btn">Desistir</button>
+  <button id="click-skip-btn">Próximo</button>
+  <button id="click-give-up-btn">Revelar Respostas</button>
 </div>
 
 <div id="flags-banner" class="game-banner">
@@ -158,6 +155,18 @@
   <div>
     <div class="banner-text" id="lang-name">---</div>
     <div class="banner-progress" id="lang-progress">L&#xED;ngua 1 / ? &#x2014; Faltam ? pa&#xED;ses</div>
+  </div>
+</div>
+
+<div id="walk-banner" class="game-banner">
+  <div class="walk-route">
+    <img id="walk-start-flag" class="banner-mini-flag" src="" alt="">
+    <span id="walk-start-name" class="walk-endpoint">---</span>
+    <span class="walk-arrow">&#x2192;</span>
+    <span id="walk-steps" class="banner-text">0 passos</span>
+    <span class="walk-arrow">&#x2192;</span>
+    <span id="walk-end-name" class="walk-endpoint">---</span>
+    <img id="walk-end-flag" class="banner-mini-flag" src="" alt="">
   </div>
 </div>
 
@@ -186,7 +195,7 @@
 
 <div id="states-input-container">
   <input type="text" id="state-input" placeholder="Digite o nome de um estado..." autocomplete="off" maxlength="100">
-  <button id="states-give-up-btn">Desistir</button>
+  <button id="states-give-up-btn">Revelar Respostas</button>
 </div>
 
 <div id="states-hint-display"></div>
@@ -196,10 +205,10 @@
 
 <div id="input-container">
   <input type="text" id="country-input" placeholder="Digite o nome de um pa&#xED;s..." autocomplete="off" maxlength="100">
-  <button id="flags-skip-btn" class="skip-btn" style="display:none">Pular</button>
-  <button id="capitals-skip-btn" class="skip-btn" style="display:none">Pular</button>
-  <button id="lang-skip-btn" class="skip-btn" style="display:none">Pular L&#xED;ngua</button>
-  <button id="give-up-btn">Desistir</button>
+  <button id="flags-skip-btn" class="skip-btn" style="display:none">Próximo</button>
+  <button id="capitals-skip-btn" class="skip-btn" style="display:none">Próximo</button>
+  <button id="lang-skip-btn" class="skip-btn" style="display:none">Próxima Língua</button>
+  <button id="give-up-btn">Revelar Respostas</button>
 </div>
 
 <div id="hint-display"></div>
@@ -228,20 +237,20 @@
 <div id="victory-overlay">
   <div id="victory-content">
     <h1>Parab&#xE9;ns!</h1>
-    <p>Voc&#xEA; encontrou todos os 195 pa&#xED;ses!</p>
-    <button class="restart-btn" id="restart-btn">Jogar Novamente</button>
-    <br><button class="mode-switch-btn" id="mode-switch-btn-v">Trocar Modo</button>
+    <p>Voc&#xEA; aprendeu todos os 195 pa&#xED;ses!</p>
+    <button class="restart-btn" id="restart-btn">Praticar Novamente</button>
+    <br><button class="mode-switch-btn" id="mode-switch-btn-v">Trocar Módulo</button>
   </div>
 </div>
 
 <div id="gameover-overlay">
   <div id="gameover-content">
-    <h1>Fim de Jogo</h1>
+    <h1>Sessão Concluída</h1>
     <div class="go-score" id="go-score">0</div>
-    <div class="go-label">de 195 pa&#xED;ses encontrados</div>
+    <div class="go-label">de 195 pa&#xED;ses estudados</div>
     <div id="gameover-breakdown"></div>
-    <button class="restart-btn" id="restart-btn-go">Jogar Novamente</button>
-    <br><button class="mode-switch-btn" id="mode-switch-btn-go">Trocar Modo</button>
+    <button class="restart-btn" id="restart-btn-go">Praticar Novamente</button>
+    <br><button class="mode-switch-btn" id="mode-switch-btn-go">Trocar Módulo</button>
   </div>
 </div>
 
@@ -250,6 +259,45 @@
   <div class="review-legend-item"><div class="review-legend-swatch" style="border:2.5px solid #fbbf24;background:rgba(251,191,36,0.15);box-shadow:0 0 10px rgba(251,191,36,0.5)"></div>Acertou</div>
   <div class="review-legend-item"><div class="review-legend-swatch" style="border:2px solid #94a3b8;background:rgba(148,163,184,0.15)"></div>Para estudar</div>
 </div>
+
+<div id="silhouette-panel">
+  <div class="streak-container" id="streak-container-silhouettes" style="display:none">
+    <span class="streak-label">Sequ&#xEA;ncia:</span>
+    <span class="streak-value" id="streak-value-silhouettes">0</span>
+    <span class="streak-best" id="streak-best-silhouettes">Melhor: 0</span>
+  </div>
+  <div id="silhouette-svg-container"></div>
+  <div id="silhouette-options"></div>
+</div>
+
+<div id="population-panel">
+  <div class="streak-container" id="streak-container-population" style="display:none">
+    <span class="streak-label">Sequ&#xEA;ncia:</span>
+    <span class="streak-value" id="streak-value-population">0</span>
+    <span class="streak-best" id="streak-best-population">Melhor: 0</span>
+  </div>
+  <div class="pop-question">Qual tem mais popula&#xE7;&#xE3;o?</div>
+  <div class="pop-cards" id="population-cards"></div>
+</div>
+
+<div id="game-mode-panel">
+  <div class="streak-container" id="streak-container-game" style="display:none">
+    <span class="streak-label">Sequ&#xEA;ncia:</span>
+    <span class="streak-value" id="streak-value-game">0</span>
+    <span class="streak-best" id="streak-best-game">Melhor: 0</span>
+  </div>
+  <div id="game-mode-display"></div>
+  <div id="game-mode-options"></div>
+</div>
+
+<div id="where-banner">
+  <span>Clique em: </span>
+  <span id="where-target-name">---</span>
+  <span id="where-round-info">Rodada 1 / 7</span>
+  <span id="where-points-display">Pontos: 0</span>
+</div>
+
+<div id="where-round-result"></div>
 
 <script src="https://d3js.org/d3.v7.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>

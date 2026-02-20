@@ -4,7 +4,8 @@ import { clearChildren, createBreakdownItem, showFeedbackMsg } from '../utils/do
 import { shuffleArray } from '../utils/shuffle.js';
 import { revealCountry } from '../map/world-map.js';
 import { updateContinentCount } from '../ui/score.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
+import { showGameLostPopup } from '../ui/mode-popup.js';
 
 const TOTAL = 195;
 
@@ -38,7 +39,7 @@ export function nextClickTarget() {
     document.getElementById("gameover-content").querySelector("h1").textContent = "Parab\u00e9ns!";
     document.getElementById("go-score").textContent = clickState.correct;
     document.getElementById("gameover-content").querySelector(".go-label").textContent =
-      `de ${TOTAL} pa\u00edses (${clickState.skipped} pulados, ${clickState.incorrect} erros)`;
+      `de ${TOTAL} pa\u00edses (${clickState.skipped} revelados, ${clickState.incorrect} a revisar)`;
     const bd = document.getElementById("gameover-breakdown");
     clearChildren(bd);
     Object.keys(continentTracking.totals).forEach(c => {
@@ -85,6 +86,14 @@ export function handleClickModeClick(id) {
       setTimeout(() => { el.classed("click-wrong-flash", false); }, 400);
     }
     updateClickScoreDisplay();
+    if (game.difficulty === "hard") {
+      clickState.gameOver = true;
+      game.gameOver = true;
+      document.getElementById("click-prompt").classList.remove("active");
+      setTimeout(() => {
+        showGameLostPopup(clickState.correct, () => showWorldClickMode(), () => navigateTo("select"));
+      }, 600);
+    }
   }
 }
 

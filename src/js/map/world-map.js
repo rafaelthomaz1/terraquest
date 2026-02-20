@@ -91,6 +91,8 @@ export function initWorldMap() {
     }
 
     const countries = topojson.feature(world, world.objects.countries);
+    worldMap.features = countries.features;
+    document.dispatchEvent(new Event("worldFeaturesReady"));
 
     worldMap.g.selectAll(".country-path")
       .data(countries.features)
@@ -133,34 +135,61 @@ export function initWorldMap() {
         showHint(COUNTRIES[id]);
       });
 
-    worldMap.g.append("path")
-      .datum(topojson.mesh(world, world.objects.countries, (a, b) => a !== b))
-      .attr("class", "border-path")
-      .attr("fill", "none")
-      .attr("stroke", "#334155")
-      .attr("stroke-width", 0.5)
-      .attr("d", worldMap.path);
-
   }).catch(err => {
     console.error("Erro ao carregar mapa:", err);
     showFeedbackMsg(refs.feedback, "Erro ao carregar o mapa. Verifique sua conex\u00e3o.", "red");
   });
 }
 
+const BRIDGE_PAIRS = [["76", "266"], ["840", "620"]];
+
+export function showBridgeLines() {
+  hideBridgeLines();
+  if (!worldMap.features || !worldMap.g) return;
+
+  const bridgeG = worldMap.g.append("g").attr("class", "bridge-lines-group");
+  worldMap.bridgeLines = bridgeG;
+
+  const featureMap = {};
+  worldMap.features.forEach(f => {
+    featureMap[String(Number(f.id))] = f;
+  });
+
+  BRIDGE_PAIRS.forEach(([idA, idB]) => {
+    const fA = featureMap[idA];
+    const fB = featureMap[idB];
+    if (!fA || !fB) return;
+
+    const centA = d3.geoCentroid(fA);
+    const centB = d3.geoCentroid(fB);
+
+    const lineGeo = {
+      type: "LineString",
+      coordinates: [centA, centB],
+    };
+
+    bridgeG.append("path")
+      .datum(lineGeo)
+      .attr("class", "bridge-line")
+      .attr("d", worldMap.path);
+  });
+}
+
+export function hideBridgeLines() {
+  if (worldMap.bridgeLines) {
+    worldMap.bridgeLines.remove();
+    worldMap.bridgeLines = null;
+  }
+}
+
 export function renderMap() {
   worldMap.g.selectAll(".country-path").attr("d", worldMap.path);
-  worldMap.g.selectAll(".border-path").attr("d", worldMap.path);
-
-  // Update flag overlays: re-clone clip paths and reposition images
-  worldMap.defs.selectAll("clipPath[id^='clip-']").each(function() {
-    const countryId = this.id.replace("clip-", "");
-    const el = worldMap.pathMap[countryId];
-    if (!el) return;
-    while (this.firstChild) this.removeChild(this.firstChild);
-    this.appendChild(el.node().cloneNode(true));
-  });
-  worldMap.g.selectAll(".flag-overlay").each(function() {
-    const countryId = this.getAttribute("data-country");
+  worldMap.g.selectAll(".bridge-line").attr("d", worldMap.path);
+  worldMap.g.selectAll(".where-line").attr("d", worldMap.path);
+  worldMap.g.selectAll(".where-marker").attr("d", worldMap.path.pointRadius(5));
+  worldMap.defs.selectAll("pattern[id^='flag-']").each(function() {
+    const patId = this.id;
+    const countryId = patId.replace("flag-", "");
     const el = worldMap.pathMap[countryId];
     if (!el) return;
     const bbox = el.node().getBBox();
@@ -171,6 +200,7 @@ export function renderMap() {
 }
 
 function showHint(name) {
+  if (game.difficulty === "hard") return;
   clearTimeout(game.hintTimeout);
   refs.hintDisplay.textContent = makeHint(name);
   refs.hintDisplay.style.opacity = 1;

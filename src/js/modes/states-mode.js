@@ -66,7 +66,7 @@ export function handleStatesGuess() {
         bd.appendChild(createBreakdownItem(rc[r], r, `${statesState.regionFound[r]}/${statesState.regionTotals[r]}`));
       });
       document.getElementById("gameover-content").querySelector("h1").textContent = "Parab\u00e9ns!";
-      document.getElementById("gameover-content").querySelector(".go-label").textContent = `de ${getStatesTotal()} estados encontrados`;
+      document.getElementById("gameover-content").querySelector(".go-label").textContent = `de ${getStatesTotal()} estados aprendidos`;
       refs.gameoverOverlay.style.display = "flex";
       requestAnimationFrame(() => { refs.gameoverOverlay.classList.add("show"); });
     }, 600);
@@ -112,8 +112,8 @@ export function statesGiveUp() {
       Object.keys(statesState.regionTotals).forEach(r => {
         bd.appendChild(createBreakdownItem(rc[r], r, `${statesState.regionFound[r]}/${statesState.regionTotals[r]}`));
       });
-      document.getElementById("gameover-content").querySelector("h1").textContent = "Fim de Jogo";
-      document.getElementById("gameover-content").querySelector(".go-label").textContent = `de ${getStatesTotal()} estados encontrados`;
+      document.getElementById("gameover-content").querySelector("h1").textContent = "Sessão Concluída";
+      document.getElementById("gameover-content").querySelector(".go-label").textContent = `de ${getStatesTotal()} estados estudados`;
       document.getElementById("review-btn").style.display = "none";
       document.getElementById("review-legend").style.display = "none";
       refs.gameoverOverlay.style.display = "flex";

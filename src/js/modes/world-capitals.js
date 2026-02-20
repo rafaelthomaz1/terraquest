@@ -6,9 +6,11 @@ import { showFeedbackMsg } from '../utils/dom.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { revealCountry } from '../map/world-map.js';
 import { updateScore, updateContinentCount } from '../ui/score.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
+import { showGameLostPopup } from '../ui/mode-popup.js';
 
 const TOTAL = 195;
+let wrongCount = 0;
 
 export function showWorldCapitalsMode() {
   resetGame();
@@ -28,6 +30,7 @@ export function showWorldCapitalsMode() {
   capitalsState.found = new Set();
   capitalsState.skipped = 0;
   capitalsState.gameOver = false;
+  wrongCount = 0;
 
   nextCapitalsTarget();
   refs.input.focus();
@@ -59,7 +62,7 @@ export function handleCapitalsGuess() {
   const id = WORLD_CAPITAL_ALIASES[norm];
 
   if (!id) {
-    showFeedbackMsg(refs.feedback, "Capital n\u00e3o encontrada!", "red");
+    showFeedbackMsg(refs.feedback, "Capital n\u00e3o existe!", "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
@@ -77,12 +80,25 @@ export function handleCapitalsGuess() {
     updateContinentCount(continent);
     showFeedbackMsg(refs.feedback, `${COUNTRY_INFO[id][0]} \u2192 ${COUNTRIES[id]} \u2713`, "green");
     refs.input.value = "";
+    wrongCount = 0;
     nextCapitalsTarget();
   } else {
+    wrongCount++;
+    const maxWrong = game.difficulty === "hard" ? 1 : 2;
     showFeedbackMsg(refs.feedback, `${COUNTRY_INFO[id][0]} \u00e9 capital de ${COUNTRIES[id]}!`, "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
+    if (wrongCount >= maxWrong) {
+      capitalsState.gameOver = true;
+      game.gameOver = true;
+      refs.input.disabled = true;
+      document.getElementById("capitals-banner").classList.remove("active");
+      document.getElementById("capitals-skip-btn").style.display = "none";
+      setTimeout(() => {
+        showGameLostPopup(capitalsState.found.size, () => showWorldCapitalsMode(), () => navigateTo("select"));
+      }, 600);
+    }
   }
 }
 

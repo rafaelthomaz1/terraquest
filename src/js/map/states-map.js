@@ -1,4 +1,4 @@
-import { statesState, refs } from '../state.js';
+import { game, statesState, refs } from '../state.js';
 import { normalize, makeHint } from '../utils/normalize.js';
 import { createEl, clearChildren, createTooltipContent, createUnknownTooltip, showFeedbackMsg, createBreakdownItem } from '../utils/dom.js';
 import { showCelebrationEffect } from '../ui/celebration.js';
@@ -30,6 +30,7 @@ export function statesShowFeedback(msg, color) {
 }
 
 export function statesShowHint(name) {
+  if (game.difficulty === "hard") return;
   clearTimeout(statesState.hintTimeout);
   refs.statesHintDisplay.textContent = makeHint(name);
   refs.statesHintDisplay.style.opacity = 1;
@@ -83,7 +84,7 @@ export function statesUpdateRegionCount(region) {
       `${region} completa!`,
       colors[region],
       icons[region],
-      `${statesState.regionTotals[region]} estados encontrados`
+      `${statesState.regionTotals[region]} estados aprendidos`
     );
   }
 }

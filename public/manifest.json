@@ -1,7 +1,7 @@
 {
-  "name": "Terra Quest - Jogo de Geografia",
+  "name": "Terra Quest - Estudos de Geografia",
   "short_name": "Terra Quest",
-  "description": "Teste seus conhecimentos de geografia com 9 modos de jogo!",
+  "description": "Aprenda geografia praticando com 10 módulos de estudo!",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

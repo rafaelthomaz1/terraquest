@@ -6,7 +6,10 @@ import { showFeedbackMsg } from '../utils/dom.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { revealCountry } from '../map/world-map.js';
 import { updateContinentCount } from '../ui/score.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
+import { showGameLostPopup } from '../ui/mode-popup.js';
+
+let wrongCount = 0;
 
 export function showWorldLanguagesMode() {
   resetGame();
@@ -29,6 +32,7 @@ export function showWorldLanguagesMode() {
   langState.totalFound = 0;
   langState.totalCountries = Object.values(LANGUAGES_MAP).reduce((sum, arr) => sum + arr.length, 0);
   langState.gameOver = false;
+  wrongCount = 0;
 
   document.getElementById("score-total").textContent = langState.totalCountries;
   nextLanguage();
@@ -78,7 +82,7 @@ export function handleLanguagesGuess() {
   const id = ALIASES[norm];
 
   if (!id || !COUNTRIES[id]) {
-    showFeedbackMsg(refs.feedback, "Pa\u00eds n\u00e3o encontrado!", "red");
+    showFeedbackMsg(refs.feedback, "Pa\u00eds n\u00e3o existe!", "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
@@ -114,10 +118,22 @@ export function handleLanguagesGuess() {
       setTimeout(() => nextLanguage(), 600);
     }
   } else {
+    wrongCount++;
+    const maxWrong = game.difficulty === "hard" ? 1 : 2;
     showFeedbackMsg(refs.feedback, `${COUNTRIES[id]} n\u00e3o fala ${langState.currentLang}!`, "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
+    if (wrongCount >= maxWrong) {
+      langState.gameOver = true;
+      game.gameOver = true;
+      refs.input.disabled = true;
+      document.getElementById("lang-banner").classList.remove("active");
+      document.getElementById("lang-skip-btn").style.display = "none";
+      setTimeout(() => {
+        showGameLostPopup(langState.totalFound, () => showWorldLanguagesMode(), () => navigateTo("select"));
+      }, 600);
+    }
   }
 }
 
