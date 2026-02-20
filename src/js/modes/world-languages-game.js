@@ -50,7 +50,7 @@ function renderCountryDisplay(id) {
   const alpha2 = ISO_ALPHA2[id];
   if (alpha2) {
     const img = createEl("img", "game-mode-flag");
-    img.src = `https://flagcdn.com/w320/${alpha2}.png`;
+    img.src = `/flags/${alpha2}.png`;
     img.alt = COUNTRIES[id];
     display.appendChild(img);
   }

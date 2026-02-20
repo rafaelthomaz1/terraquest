@@ -1,17 +1,17 @@
-const CACHE_NAME = 'terraquest-v1';
+const CACHE_NAME = 'terraquest-v2';
 
 const PRECACHE_URLS = [
   '/',
   '/globo.png',
 ];
 
-const CDN_CACHE = 'terraquest-cdn-v1';
+const CDN_CACHE = 'terraquest-cdn-v2';
 const CDN_URLS = [
   'https://d3js.org/d3.v7.min.js',
   'https://cdn.jsdelivr.net/npm/topojson-client@3',
 ];
 
-const DATA_CACHE = 'terraquest-data-v1';
+const DATA_CACHE = 'terraquest-data-v2';
 
 // Install: precache shell + CDN libs
 self.addEventListener('install', (event) => {
@@ -70,8 +70,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for flag images
-  if (url.hostname === 'flagcdn.com' || url.hostname === 'commons.wikimedia.org' || url.hostname === 'upload.wikimedia.org') {
+  // Cache-first for Wikimedia flag images
+  if (url.hostname === 'commons.wikimedia.org' || url.hostname === 'upload.wikimedia.org') {
     event.respondWith(
       caches.match(event.request).then((cached) =>
         cached || fetch(event.request).then((response) => {
@@ -86,18 +86,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for app shell (same-origin)
+  // Network-first for same-origin app shell (HTML, JS, CSS)
+  // This ensures users always get the latest version on deploy
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(event.request).then((cached) =>
-        cached || fetch(event.request).then((response) => {
+      fetch(event.request)
+        .then((response) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
         })
-      )
+        .catch(() => caches.match(event.request))
     );
     return;
   }

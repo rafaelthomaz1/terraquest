@@ -97,7 +97,7 @@ export function showCountryInfoPopup(id, hideFields) {
   const alpha2 = ISO_ALPHA2[id];
   if (alpha2) {
     const flag = createEl("img", "country-info-flag");
-    flag.src = `https://flagcdn.com/w320/${alpha2}.png`;
+    flag.src = `/flags/${alpha2}.png`;
     flag.alt = COUNTRIES[id];
     card.appendChild(flag);
   }

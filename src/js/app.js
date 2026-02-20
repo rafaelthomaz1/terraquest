@@ -141,7 +141,7 @@ function renderCardSilhouettes() {
     svgEl.appendChild(defs);
 
     const imgEl = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    imgEl.setAttribute("href", "https://flagcdn.com/w320/" + alpha2 + ".png");
+    imgEl.setAttribute("href", "/flags/" + alpha2 + ".png");
     imgEl.setAttribute("x", "0");
     imgEl.setAttribute("y", "0");
     imgEl.setAttribute("width", "80");

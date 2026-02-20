@@ -133,8 +133,8 @@ export function showWorldWalkMode() {
   const endAlpha = ISO_ALPHA2[pair.end];
   const startFlag = document.getElementById("walk-start-flag");
   const endFlag = document.getElementById("walk-end-flag");
-  if (startAlpha) startFlag.src = `https://flagcdn.com/w80/${startAlpha}.png`;
-  if (endAlpha) endFlag.src = `https://flagcdn.com/w80/${endAlpha}.png`;
+  if (startAlpha) startFlag.src = `/flags/${startAlpha}.png`;
+  if (endAlpha) endFlag.src = `/flags/${endAlpha}.png`;
   document.getElementById("walk-start-name").textContent = COUNTRIES[pair.start];
   document.getElementById("walk-end-name").textContent = COUNTRIES[pair.end];
 

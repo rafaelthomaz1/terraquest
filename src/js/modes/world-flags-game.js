@@ -45,7 +45,7 @@ function renderFlag(id) {
   clearChildren(display);
   const alpha2 = ISO_ALPHA2[id];
   const img = createEl("img", "game-mode-flag");
-  img.src = `https://flagcdn.com/w320/${alpha2}.png`;
+  img.src = `/flags/${alpha2}.png`;
   img.alt = "Bandeira";
   display.appendChild(img);
 

@@ -142,7 +142,7 @@ function buildPopCard(id) {
 
   const alpha2 = ISO_ALPHA2[id];
   const flagImg = createEl("img");
-  flagImg.src = `https://flagcdn.com/w320/${alpha2}.png`;
+  flagImg.src = `/flags/${alpha2}.png`;
   flagImg.alt = COUNTRIES[id];
   flagImg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:8px;opacity:0.3;";
 
@@ -170,7 +170,7 @@ function buildPopCard(id) {
     svgEl.appendChild(defs);
 
     const imgEl = document.createElementNS("http://www.w3.org/2000/svg", "image");
-    imgEl.setAttribute("href", `https://flagcdn.com/w320/${alpha2}.png`);
+    imgEl.setAttribute("href", `/flags/${alpha2}.png`);
     imgEl.setAttribute("x", "0");
     imgEl.setAttribute("y", "0");
     imgEl.setAttribute("width", "220");

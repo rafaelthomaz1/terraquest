@@ -80,7 +80,7 @@ function renderCountryInfo(id) {
 
   const alpha2 = ISO_ALPHA2[id];
   const flag = createEl("img", "game-mode-capital-flag");
-  flag.src = `https://flagcdn.com/w80/${alpha2}.png`;
+  flag.src = `/flags/${alpha2}.png`;
   flag.alt = COUNTRIES[id];
   info.appendChild(flag);
 
