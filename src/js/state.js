@@ -7,6 +7,7 @@ export const game = {
   currentScreen: "home",
   currentGameMode: null,
   hintTimeout: null,
+  difficulty: "easy",
 };
 
 export const worldMap = {
@@ -23,6 +24,8 @@ export const worldMap = {
   dragStartTY: 0,
   width: 0,
   height: 0,
+  features: null,
+  bridgeLines: null,
 };
 
 export const continentTracking = {
@@ -85,6 +88,45 @@ export const clickState = {
   incorrect: 0,
   skipped: 0,
   found: new Set(),
+  gameOver: false,
+};
+
+export const walkState = {
+  startId: null,
+  endId: null,
+  pathIds: new Set(),
+  frontierIds: new Set(),
+  steps: 0,
+  gameOver: false,
+  connected: false,
+  shortestPath: [],
+  adjacency: null,
+};
+
+export const silhouetteState = {
+  queue: [],
+  current: null,
+  streak: 0,
+  bestStreak: 0,
+  missedOnce: false,
+  gameOver: false,
+};
+
+export const populationState = {
+  pairs: [],
+  currentPairIndex: 0,
+  streak: 0,
+  bestStreak: 0,
+  missedOnce: false,
+  gameOver: false,
+};
+
+export const whereIsState = {
+  queue: [],
+  currentTarget: null,
+  round: 0,
+  totalRounds: 7,
+  totalPoints: 0,
   gameOver: false,
 };
 

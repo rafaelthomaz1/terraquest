@@ -32,6 +32,6 @@ function showContinentCelebration(cont) {
     `${CONTINENT_NAMES[cont]} completa!`,
     CONTINENT_COLORS[cont],
     CONTINENT_ICONS[cont],
-    `${continentTracking.totals[cont]} pa\u00edses encontrados`
+    `${continentTracking.totals[cont]} pa\u00edses aprendidos`
   );
 }

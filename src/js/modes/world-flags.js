@@ -6,9 +6,11 @@ import { showFeedbackMsg } from '../utils/dom.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { revealCountry } from '../map/world-map.js';
 import { updateScore, updateContinentCount } from '../ui/score.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
+import { showGameLostPopup } from '../ui/mode-popup.js';
 
 const TOTAL = 195;
+let wrongCount = 0;
 
 export function showWorldFlagsMode() {
   resetGame();
@@ -28,6 +30,7 @@ export function showWorldFlagsMode() {
   flagsState.found = new Set();
   flagsState.skipped = 0;
   flagsState.gameOver = false;
+  wrongCount = 0;
 
   nextFlagsTarget();
   refs.input.focus();
@@ -58,7 +61,7 @@ export function handleFlagsGuess() {
   const id = ALIASES[norm];
 
   if (!id || !COUNTRIES[id]) {
-    showFeedbackMsg(refs.feedback, "Pa\u00eds n\u00e3o encontrado!", "red");
+    showFeedbackMsg(refs.feedback, "Pa\u00eds n\u00e3o existe!", "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
@@ -76,15 +79,28 @@ export function handleFlagsGuess() {
     updateContinentCount(continent);
     showFeedbackMsg(refs.feedback, `${COUNTRIES[id]} \u2713`, "green");
     refs.input.value = "";
+    wrongCount = 0;
     nextFlagsTarget();
   } else if (game.found.has(id) || flagsState.found.has(id)) {
     showFeedbackMsg(refs.feedback, `${COUNTRIES[id]} j\u00e1 foi encontrado!`, "yellow");
     refs.input.value = "";
   } else {
+    wrongCount++;
+    const maxWrong = game.difficulty === "hard" ? 1 : 2;
     showFeedbackMsg(refs.feedback, `N\u00e3o \u00e9 ${COUNTRIES[id]}!`, "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
+    if (wrongCount >= maxWrong) {
+      flagsState.gameOver = true;
+      game.gameOver = true;
+      refs.input.disabled = true;
+      document.getElementById("flags-banner").classList.remove("active");
+      document.getElementById("flags-skip-btn").style.display = "none";
+      setTimeout(() => {
+        showGameLostPopup(flagsState.found.size, () => showWorldFlagsMode(), () => navigateTo("select"));
+      }, 600);
+    }
   }
 }
 
