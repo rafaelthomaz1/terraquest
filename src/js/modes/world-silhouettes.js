@@ -4,7 +4,8 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { generateOptions, renderOptionBoxes } from '../ui/option-boxes.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
-import { showGameLostPopup } from '../ui/mode-popup.js';
+import { showGameLostPopup, showEndGamePopup } from '../ui/mode-popup.js';
+import { deduplicateFeatures } from '../utils/geo.js';
 
 let topoCache = null;
 let boxesCtrl = null;
@@ -51,6 +52,7 @@ function renderSilhouette(id) {
 
   const world = topoCache;
   const countries = topojson.feature(world, world.objects.countries);
+  countries.features = deduplicateFeatures(countries.features);
   const feature = countries.features.find(f => String(Number(f.id)) === id);
   if (!feature) { nextSilhouette(); return; }
 
@@ -131,21 +133,10 @@ function bumpStreak() {
 
 function endSilhouettes() {
   silhouetteState.gameOver = true;
-  const container = document.getElementById("silhouette-options");
-  clearChildren(container);
-  const svgContainer = document.getElementById("silhouette-svg-container");
-  clearChildren(svgContainer);
-
-  const msg = createEl("div", "game-mode-country");
-  msg.textContent = `Fim! Melhor sequência: ${silhouetteState.bestStreak}`;
-  svgContainer.appendChild(msg);
-
-  const btn = createEl("button", "restart-btn", "Jogar Novamente");
-  btn.addEventListener("click", () => showWorldSilhouettesMode());
-  container.appendChild(btn);
-
-  const menuBtn = createEl("button", "mode-switch-btn", "Trocar Módulo");
-  menuBtn.style.marginTop = "12px";
-  menuBtn.addEventListener("click", () => navigateTo("select"));
-  container.appendChild(menuBtn);
+  showEndGamePopup(
+    `Melhor sequ\u00eancia: ${silhouetteState.bestStreak}`,
+    "Silhuetas conclu\u00eddo!",
+    () => showWorldSilhouettesMode(),
+    () => navigateTo("select")
+  );
 }

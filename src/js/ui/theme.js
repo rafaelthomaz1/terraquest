@@ -6,10 +6,10 @@ export function initTheme() {
   const themeLabel = document.getElementById("theme-label");
 
   const savedTheme = safeGetItem("quiz-theme");
-  if (savedTheme === "light") {
-    document.body.classList.add("light");
-    themeIcon.textContent = "\u2600\uFE0F";
-    themeLabel.textContent = "Modo Claro";
+  if (savedTheme === "dark") {
+    document.body.classList.remove("light");
+    themeIcon.textContent = "\uD83C\uDF19";
+    themeLabel.textContent = "Modo Escuro";
   }
 
   themeBtn.addEventListener("click", () => {

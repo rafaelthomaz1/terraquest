@@ -4,6 +4,7 @@ import { createTooltipContent, createUnknownTooltip } from '../utils/dom.js';
 import { makeHint } from '../utils/normalize.js';
 import { showFeedbackMsg } from '../utils/dom.js';
 import { handleClickModeClick } from '../modes/world-click.js';
+import { deduplicateFeatures } from '../utils/geo.js';
 
 // ── Map initialization ──────────────────────────────────────────────────────
 export function initWorldMap() {
@@ -91,6 +92,7 @@ export function initWorldMap() {
     }
 
     const countries = topojson.feature(world, world.objects.countries);
+    countries.features = deduplicateFeatures(countries.features);
     worldMap.features = countries.features;
     document.dispatchEvent(new Event("worldFeaturesReady"));
 
@@ -187,15 +189,21 @@ export function renderMap() {
   worldMap.g.selectAll(".bridge-line").attr("d", worldMap.path);
   worldMap.g.selectAll(".where-line").attr("d", worldMap.path);
   worldMap.g.selectAll(".where-marker").attr("d", worldMap.path.pointRadius(5));
-  worldMap.defs.selectAll("pattern[id^='flag-']").each(function() {
-    const patId = this.id;
-    const countryId = patId.replace("flag-", "");
+
+  worldMap.g.selectAll(".flag-overlay").each(function() {
+    const img = d3.select(this);
+    const countryId = img.attr("data-country");
     const el = worldMap.pathMap[countryId];
     if (!el) return;
+
+    const clipPath = worldMap.defs.select(`#clip-${countryId} path`);
+    if (!clipPath.empty()) {
+      clipPath.attr("d", el.attr("d"));
+    }
+
     const bbox = el.node().getBBox();
-    d3.select(this)
-      .attr("x", bbox.x).attr("y", bbox.y)
-      .attr("width", bbox.width).attr("height", bbox.height);
+    img.attr("x", bbox.x).attr("y", bbox.y)
+       .attr("width", bbox.width).attr("height", bbox.height);
   });
 }
 

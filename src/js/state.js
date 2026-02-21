@@ -1,6 +1,12 @@
 // Shared mutable game state
 // All modules import from here and mutate properties directly
 
+export const authState = {
+  currentUser: null,
+  isGuest: false,
+  recordsCache: null,
+};
+
 export const game = {
   found: new Set(),
   gameOver: false,
@@ -8,6 +14,7 @@ export const game = {
   currentGameMode: null,
   hintTimeout: null,
   difficulty: "easy",
+  _recordSaved: false,
 };
 
 export const worldMap = {
@@ -128,6 +135,16 @@ export const whereIsState = {
   totalRounds: 7,
   totalPoints: 0,
   gameOver: false,
+};
+
+export const areaState = {
+  pairs: [],
+  currentPairIndex: 0,
+  streak: 0,
+  bestStreak: 0,
+  missedOnce: false,
+  gameOver: false,
+  totalRounds: 0,
 };
 
 // DOM element references (initialized in app.js)

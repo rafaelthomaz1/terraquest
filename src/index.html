@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8201603036199507"
+     crossorigin="anonymous"></script>
 <title>Terra Quest - Estudos de Geografia</title>
 
 <!-- Security -->
@@ -32,7 +34,7 @@
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#3fb950">
+<meta name="theme-color" content="#e8772e">
 
 <!-- Preconnect to critical CDNs -->
 <link rel="preconnect" href="https://d3js.org" crossorigin>
@@ -45,13 +47,16 @@
 
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="light">
 
 <div id="top-right-controls">
 <button id="menu-btn">MENU</button>
-<button id="theme-toggle" title="Alternar tema"><span id="theme-icon">&#x1F319;</span><span id="theme-label">Modo Escuro</span></button>
+<button id="theme-toggle" title="Alternar tema"><span id="theme-icon">&#x2600;&#xFE0F;</span><span id="theme-label">Modo Claro</span></button>
 <button id="difficulty-toggle" title="Alternar dificuldade"><span id="difficulty-label">&#x1F7E2; Modo F&#xE1;cil</span><span class="difficulty-tooltip"><b>&#x1F7E2; Modo F&#xE1;cil</b>: segunda chance nos modos game. <b>&#x1F534; Modo Dif&#xED;cil</b>: sem segunda chance — erre e o streak zera. <b>&#x1F4D6; Aprendizado</b>: sem elimina&#xE7;&#xE3;o — jogue sem parar para praticar.</span></button>
 </div>
+
+<div id="login-screen"></div>
+<div id="register-screen"></div>
 
 <div id="home-screen">
   <canvas id="home-particles"></canvas>
@@ -59,65 +64,51 @@
   <div class="home-title">Terra Quest</div>
   <div class="home-subtitle" id="home-subtitle"></div>
   <button class="play-btn" id="play-btn">COMEÇAR</button>
-  <button class="guidelines-btn" id="guidelines-btn">DIRETRIZES</button>
+  <button class="guidelines-btn" id="guidelines-btn">COMO JOGAR</button>
 </div>
+
+<div id="stopwatch">00:00</div>
 
 <div id="select-screen">
   <button class="back-btn" id="back-btn">&larr; Voltar</button>
-  <div class="select-title">Módulos de Estudo</div>
-  <div class="select-subtitle">Escolha uma atividade para praticar</div>
+  <div class="select-title">M&#xF3;dulos de Estudo</div>
+  <div class="select-subtitle">Escolha uma categoria para praticar</div>
   <div class="select-section">
-    <div class="select-section-title">&#x1F30D; Mundo</div>
     <div class="mode-cards-grid">
-      <div class="mode-card" data-mode="world-type">
-        <div class="mode-card-icon">&#x2328;&#xFE0F;</div>
-        <div class="mode-card-title">Nomear Pa&#xED;ses</div>
-        <div class="mode-card-desc">Pratique os nomes dos 195 pa&#xED;ses do mundo</div>
+      <div class="mode-card category-card" data-category="map-territory">
+        <div class="mode-card-icon">&#x1F30D;</div>
+        <div class="mode-card-title">Mapa e Territ&#xF3;rio</div>
+        <div class="mode-card-desc">Nomear pa&#xED;ses, localizar no mapa e rota entre fronteiras</div>
       </div>
-      <div class="mode-card" data-mode="world-click">
-        <div class="mode-card-icon">&#x1F5B1;&#xFE0F;</div>
-        <div class="mode-card-title">Localizar no Mapa</div>
-        <div class="mode-card-desc">Identifique a posi&#xE7;&#xE3;o de cada pa&#xED;s no mapa</div>
-      </div>
-      <div class="mode-card" data-mode="world-flags">
+      <div class="mode-card category-card" data-category="flags">
         <div class="mode-card-icon">&#x1F3F3;&#xFE0F;</div>
-        <div class="mode-card-title">Reconhecer Bandeiras</div>
-        <div class="mode-card-desc">Aprenda as bandeiras dos 195 pa&#xED;ses</div>
+        <div class="mode-card-title">Bandeiras</div>
+        <div class="mode-card-desc">Reconhe&#xE7;a e clique nas bandeiras dos pa&#xED;ses</div>
       </div>
-      <div class="mode-card" data-mode="world-capitals">
+      <div class="mode-card category-card" data-category="capitals">
         <div class="mode-card-icon">&#x1F3DB;&#xFE0F;</div>
-        <div class="mode-card-title">Capitais do Mundo</div>
-        <div class="mode-card-desc">Aprenda as capitais dos 195 pa&#xED;ses</div>
+        <div class="mode-card-title">Capitais e Cidades</div>
+        <div class="mode-card-desc">Capitais, pontos tur&#xED;sticos e localiza&#xE7;&#xE3;o</div>
       </div>
-      <div class="mode-card" data-mode="world-languages">
+      <div class="mode-card category-card" data-category="languages">
         <div class="mode-card-icon">&#x1F5E3;&#xFE0F;</div>
-        <div class="mode-card-title">L&#xED;nguas do Mundo</div>
+        <div class="mode-card-title">Idiomas</div>
         <div class="mode-card-desc">Associe pa&#xED;ses aos seus idiomas oficiais</div>
       </div>
-      <div class="mode-card" data-mode="world-walk">
-        <div class="mode-card-icon">&#x1F6A9;</div>
-        <div class="mode-card-title">Rota entre Fronteiras</div>
-        <div class="mode-card-desc">Conecte dois pa&#xED;ses por pa&#xED;ses vizinhos</div>
+      <div class="mode-card category-card" data-category="challenges">
+        <div class="mode-card-icon">&#x1F3AF;</div>
+        <div class="mode-card-title">Desafios</div>
+        <div class="mode-card-desc">Silhuetas, popula&#xE7;&#xE3;o, &#xE1;rea e mais</div>
       </div>
-      <div class="mode-card" data-mode="world-silhouettes">
-        <div class="mode-card-icon">&#x1F5FA;&#xFE0F;</div>
-        <div class="mode-card-title">Silhuetas</div>
-        <div class="mode-card-desc">Identifique pa&#xED;ses pelo contorno</div>
-      </div>
-      <div class="mode-card" data-mode="world-population">
-        <div class="mode-card-icon">&#x1F4CA;</div>
-        <div class="mode-card-title">Popula&#xE7;&#xE3;o</div>
-        <div class="mode-card-desc">Qual pa&#xED;s tem mais popula&#xE7;&#xE3;o?</div>
-      </div>
-      <div class="mode-card" data-mode="study-br">
+      <div class="mode-card category-card" data-category="study-br">
         <div class="mode-card-silhouette" id="silhouette-card-br"></div>
         <div class="mode-card-title">Estudar o Brasil</div>
-        <div class="mode-card-desc">27 estados e capitais brasileiras</div>
+        <div class="mode-card-desc">Estados, capitais, biomas, vegeta&#xE7;&#xE3;o e clima</div>
       </div>
-      <div class="mode-card" data-mode="study-us">
+      <div class="mode-card category-card" data-category="study-us">
         <div class="mode-card-silhouette" id="silhouette-card-us"></div>
         <div class="mode-card-title">Estudar os EUA</div>
-        <div class="mode-card-desc">51 estados e capitais americanas</div>
+        <div class="mode-card-desc">Estados, capitais e localiza&#xE7;&#xE3;o</div>
       </div>
     </div>
   </div>
@@ -173,7 +164,7 @@
 <div id="world-panel">
 <div id="top-bar">
   <div id="score-display">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8772e" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
     <div id="score-text"><span id="score-num">0</span> / <span id="score-total">195</span></div>
   </div>
 </div>
@@ -187,7 +178,7 @@
 </div>
 
 <div id="states-score-display">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8772e" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
   <div id="states-score-text"><span id="states-score-num">0</span> / <span id="states-total-num">27</span></div>
 </div>
 
@@ -299,6 +290,33 @@
 
 <div id="where-round-result"></div>
 
+<div id="flag-click-panel">
+  <div id="flag-click-header">
+    <span id="flag-click-progress">0 / 30  0%</span>
+    <span>Clique em <strong id="flag-click-target">---</strong></span>
+    <button id="flag-click-skip" class="skip-btn">&#x25B6;|</button>
+  </div>
+  <div id="flag-click-grid"></div>
+</div>
+
+<div id="capital-locate-panel">
+  <div id="capital-locate-banner" class="game-banner" style="display:flex">
+    <span id="capital-locate-progress">0 / 10</span>
+    <span>Clique em <strong id="capital-locate-target">---</strong></span>
+    <img id="capital-locate-flag" class="banner-mini-flag" src="" alt="" style="display:none">
+  </div>
+  <div id="capital-locate-map"></div>
+</div>
+
+<div id="biomes-panel">
+  <div id="biomes-banner" class="game-banner" style="display:flex">
+    <span id="biomes-progress">0 / 6</span>
+    <span>Clique em <strong id="biomes-target">---</strong></span>
+  </div>
+  <div id="biomes-map"></div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://d3js.org/d3.v7.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
 <script type="module" src="/js/app.js"></script>

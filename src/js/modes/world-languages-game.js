@@ -5,7 +5,7 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { renderOptionBoxes } from '../ui/option-boxes.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
-import { showGameLostPopup, showCountryInfoPopup } from '../ui/mode-popup.js';
+import { showGameLostPopup, showCountryInfoPopup, showEndGamePopup } from '../ui/mode-popup.js';
 
 let streak = 0;
 let bestStreak = 0;
@@ -92,6 +92,7 @@ function renderChoices(correctId) {
       boxesCtrl.disable();
       streak++;
       if (streak > bestStreak) bestStreak = streak;
+      game._bestStreak = bestStreak;
       updateStreakDisplay();
       bumpStreak();
       setTimeout(() => nextLanguage(), 800);
@@ -137,21 +138,10 @@ function bumpStreak() {
 }
 
 function endLanguagesGame() {
-  const display = document.getElementById("game-mode-display");
-  const container = document.getElementById("game-mode-options");
-  clearChildren(display);
-  clearChildren(container);
-
-  const msg = createEl("div", "game-mode-country");
-  msg.textContent = `Fim! Melhor sequ\u00eancia: ${bestStreak}`;
-  display.appendChild(msg);
-
-  const btn = createEl("button", "restart-btn", "Jogar Novamente");
-  btn.addEventListener("click", () => showWorldLanguagesGameMode());
-  container.appendChild(btn);
-
-  const menuBtn = createEl("button", "mode-switch-btn", "Trocar M\u00f3dulo");
-  menuBtn.style.marginTop = "12px";
-  menuBtn.addEventListener("click", () => navigateTo("select"));
-  container.appendChild(menuBtn);
+  showEndGamePopup(
+    `Melhor sequ\u00eancia: ${bestStreak}`,
+    "Idiomas conclu\u00eddo!",
+    () => showWorldLanguagesGameMode(),
+    () => navigateTo("select")
+  );
 }

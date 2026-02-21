@@ -4,7 +4,8 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { parsePopulation } from '../utils/population.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
-import { showGameLostPopup, showCountryInfoPopup } from '../ui/mode-popup.js';
+import { showGameLostPopup, showCountryInfoPopup, showEndGamePopup } from '../ui/mode-popup.js';
+import { deduplicateFeatures } from '../utils/geo.js';
 
 let topoCache = null;
 
@@ -16,15 +17,17 @@ function loadTopo() {
   });
 }
 
-export function showWorldPopulationMode() {
+export function showWorldPopulationMode(totalRounds) {
   const panel = document.getElementById("population-panel");
   panel.classList.add("active");
   document.getElementById("streak-container-population").style.display = "flex";
+  document.querySelector(".pop-question").textContent = "Qual tem mais popula\u00e7\u00e3o?";
 
   const ids = Object.keys(COUNTRIES).filter(id => COUNTRY_INFO[id]);
   shuffleArray(ids);
+  const limit = totalRounds ? Math.min(totalRounds * 2, ids.length) : ids.length;
   const pairs = [];
-  for (let i = 0; i + 1 < ids.length; i += 2) {
+  for (let i = 0; i + 1 < limit; i += 2) {
     pairs.push([ids[i], ids[i + 1]]);
   }
 
@@ -34,6 +37,7 @@ export function showWorldPopulationMode() {
   populationState.bestStreak = 0;
   populationState.missedOnce = false;
   populationState.gameOver = false;
+  populationState.totalRounds = totalRounds || null;
 
   updateStreakDisplay();
   loadTopo().then(() => nextPair()).catch(() => {});
@@ -115,7 +119,7 @@ function renderPair(idA, idB) {
         populationState.streak = 0;
         updateStreakDisplay();
         setTimeout(() => {
-          showGameLostPopup(populationState.bestStreak, () => showWorldPopulationMode(), () => navigateTo("select"));
+          showGameLostPopup(populationState.bestStreak, () => showWorldPopulationMode(populationState.totalRounds), () => navigateTo("select"));
         }, 1200);
       }
     }
@@ -148,6 +152,7 @@ function buildPopCard(id) {
 
   const world = topoCache;
   const countries = topojson.feature(world, world.objects.countries);
+  countries.features = deduplicateFeatures(countries.features);
   const feature = countries.features.find(f => String(Number(f.id)) === id);
 
   if (feature) {
@@ -227,19 +232,10 @@ function bumpStreak() {
 
 function endPopulation() {
   populationState.gameOver = true;
-  const container = document.getElementById("population-cards");
-  clearChildren(container);
-
-  const msg = createEl("div", "game-mode-country");
-  msg.textContent = `Fim! Melhor sequência: ${populationState.bestStreak}`;
-  container.appendChild(msg);
-
-  const btn = createEl("button", "restart-btn", "Jogar Novamente");
-  btn.addEventListener("click", () => showWorldPopulationMode());
-  container.appendChild(btn);
-
-  const menuBtn = createEl("button", "mode-switch-btn", "Trocar Módulo");
-  menuBtn.style.marginTop = "12px";
-  menuBtn.addEventListener("click", () => navigateTo("select"));
-  container.appendChild(menuBtn);
+  showEndGamePopup(
+    `Melhor sequ\u00eancia: ${populationState.bestStreak}`,
+    "Popula\u00e7\u00e3o conclu\u00eddo!",
+    () => showWorldPopulationMode(populationState.totalRounds),
+    () => navigateTo("select")
+  );
 }

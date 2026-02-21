@@ -4,7 +4,7 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { generateOptions, renderOptionBoxes } from '../ui/option-boxes.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
-import { showGameLostPopup, showCountryInfoPopup } from '../ui/mode-popup.js';
+import { showGameLostPopup, showEndGamePopup } from '../ui/mode-popup.js';
 
 let streak = 0;
 let bestStreak = 0;
@@ -48,10 +48,6 @@ function renderFlag(id) {
   img.src = `/flags/${alpha2}.png`;
   img.alt = "Bandeira";
   display.appendChild(img);
-
-  const learnBtn = createEl("button", "learn-country-btn", "Aprender sobre o Pa\u00eds");
-  learnBtn.addEventListener("click", () => showCountryInfoPopup(id));
-  display.appendChild(learnBtn);
 }
 
 function renderChoices(correctId) {
@@ -69,6 +65,7 @@ function renderChoices(correctId) {
       boxesCtrl.disable();
       streak++;
       if (streak > bestStreak) bestStreak = streak;
+      game._bestStreak = bestStreak;
       updateStreakDisplay();
       bumpStreak();
       setTimeout(() => nextFlag(), 800);
@@ -114,21 +111,10 @@ function bumpStreak() {
 }
 
 function endFlagsGame() {
-  const display = document.getElementById("game-mode-display");
-  const container = document.getElementById("game-mode-options");
-  clearChildren(display);
-  clearChildren(container);
-
-  const msg = createEl("div", "game-mode-country");
-  msg.textContent = `Fim! Melhor sequência: ${bestStreak}`;
-  display.appendChild(msg);
-
-  const btn = createEl("button", "restart-btn", "Jogar Novamente");
-  btn.addEventListener("click", () => showWorldFlagsGameMode());
-  container.appendChild(btn);
-
-  const menuBtn = createEl("button", "mode-switch-btn", "Trocar Módulo");
-  menuBtn.style.marginTop = "12px";
-  menuBtn.addEventListener("click", () => navigateTo("select"));
-  container.appendChild(menuBtn);
+  showEndGamePopup(
+    `Melhor sequ\u00eancia: ${bestStreak}`,
+    "Bandeiras conclu\u00eddo!",
+    () => showWorldFlagsGameMode(),
+    () => navigateTo("select")
+  );
 }

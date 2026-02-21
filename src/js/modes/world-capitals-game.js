@@ -4,7 +4,8 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { generateOptions, renderOptionBoxes } from '../ui/option-boxes.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
-import { showGameLostPopup, showCountryInfoPopup } from '../ui/mode-popup.js';
+import { showGameLostPopup, showCountryInfoPopup, showEndGamePopup } from '../ui/mode-popup.js';
+import { deduplicateFeatures } from '../utils/geo.js';
 
 let streak = 0;
 let bestStreak = 0;
@@ -60,6 +61,7 @@ function renderCountryInfo(id) {
 
   if (topoCache) {
     const countries = topojson.feature(topoCache, topoCache.objects.countries);
+    countries.features = deduplicateFeatures(countries.features);
     const feature = countries.features.find(f => String(Number(f.id)) === id);
     if (feature) {
       const size = 160;
@@ -106,6 +108,7 @@ function renderChoices(correctId) {
       boxesCtrl.disable();
       streak++;
       if (streak > bestStreak) bestStreak = streak;
+      game._bestStreak = bestStreak;
       updateStreakDisplay();
       bumpStreak();
       setTimeout(() => nextCapital(), 800);
@@ -151,21 +154,10 @@ function bumpStreak() {
 }
 
 function endCapitalsGame() {
-  const display = document.getElementById("game-mode-display");
-  const container = document.getElementById("game-mode-options");
-  clearChildren(display);
-  clearChildren(container);
-
-  const msg = createEl("div", "game-mode-country");
-  msg.textContent = `Fim! Melhor sequência: ${bestStreak}`;
-  display.appendChild(msg);
-
-  const btn = createEl("button", "restart-btn", "Jogar Novamente");
-  btn.addEventListener("click", () => showWorldCapitalsGameMode());
-  container.appendChild(btn);
-
-  const menuBtn = createEl("button", "mode-switch-btn", "Trocar Módulo");
-  menuBtn.style.marginTop = "12px";
-  menuBtn.addEventListener("click", () => navigateTo("select"));
-  container.appendChild(menuBtn);
+  showEndGamePopup(
+    `Melhor sequ\u00eancia: ${bestStreak}`,
+    "Capitais conclu\u00eddo!",
+    () => showWorldCapitalsGameMode(),
+    () => navigateTo("select")
+  );
 }
