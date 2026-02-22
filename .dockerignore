@@ -1,0 +1,11 @@
+node_modules
+.git
+.claude
+.env
+*.zip
+*.md
+certbot
+terraquest.db
+src
+public
+vite.config.js
