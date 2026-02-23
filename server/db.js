@@ -8,6 +8,32 @@ const dbPath = process.env.DB_PATH || join(__dirname, '..', 'terraquest.db');
 
 let db;
 
+const SCORE_RATIO_MODES = [
+  "world-type", "world-click", "world-flags", "world-capitals",
+  "world-languages", "br-states", "br-capitals", "us-states", "us-capitals"
+];
+const STREAK_MODES = [
+  "world-silhouettes", "world-population", "world-area-game",
+  "world-flags-game", "world-capitals-game", "world-languages-game",
+  "landmarks-game"
+];
+
+export function calculateXP(gameMode, score, total, timeSeconds) {
+  if (SCORE_RATIO_MODES.includes(gameMode)) {
+    return total > 0 ? Math.round((score / total) * 100) : 0;
+  }
+  if (STREAK_MODES.includes(gameMode)) {
+    return Math.min(Math.round(score * 5), 200);
+  }
+  if (gameMode === "world-where") {
+    return Math.round((score / 7000) * 100);
+  }
+  if (gameMode === "world-walk") {
+    return total > 0 ? Math.round(Math.min(total / Math.max(score, 1), 1) * 100) : 50;
+  }
+  return total > 0 ? Math.round((score / total) * 100) : 25;
+}
+
 export async function initDb() {
   const SQL = await initSqlJs();
 
@@ -46,6 +72,30 @@ export async function initDb() {
   `);
 
   db.run('CREATE INDEX IF NOT EXISTS idx_records_user_mode ON game_records(user_id, game_mode)');
+
+  // Migration: add xp columns
+  try { db.run('ALTER TABLE game_records ADD COLUMN xp_earned INTEGER DEFAULT 0'); } catch { /* already exists */ }
+  try { db.run('ALTER TABLE users ADD COLUMN total_xp INTEGER DEFAULT 0'); } catch { /* already exists */ }
+
+  // Backfill XP on old records that have xp_earned = 0
+  const needsBackfill = db.exec('SELECT COUNT(*) as c FROM game_records WHERE xp_earned = 0');
+  if (needsBackfill.length > 0 && needsBackfill[0].values[0][0] > 0) {
+    const rows = db.exec('SELECT id, game_mode, score, total, time_seconds FROM game_records WHERE xp_earned = 0');
+    if (rows.length > 0) {
+      for (const row of rows[0].values) {
+        const [id, mode, score, total, time] = row;
+        const xp = calculateXP(mode, score, total, time);
+        db.run('UPDATE game_records SET xp_earned = ? WHERE id = ?', [xp, id]);
+      }
+    }
+    // Recalculate total_xp per user
+    const userXps = db.exec('SELECT user_id, SUM(xp_earned) as total FROM game_records GROUP BY user_id');
+    if (userXps.length > 0) {
+      for (const row of userXps[0].values) {
+        db.run('UPDATE users SET total_xp = ? WHERE id = ?', [row[1], row[0]]);
+      }
+    }
+  }
 
   saveDb();
   return db;

@@ -95,22 +95,26 @@ export function showModePopup(title, subtitle, options, onSelect) {
 export function showGameLostPopup(bestStreak, onRestart, onMenu) {
   closeModePopup();
 
+  let xpPromise = null;
   if (typeof window.__saveGameRecord === 'function' && game.currentGameMode) {
-    window.__saveGameRecord(game.currentGameMode, bestStreak, bestStreak, getElapsedSeconds());
+    xpPromise = window.__saveGameRecord(game.currentGameMode, bestStreak, bestStreak, getElapsedSeconds());
     game._recordSaved = true;
   }
 
   overlayEl = createEl("div", "mode-popup-overlay");
 
   const card = createEl("div", "game-lost-card");
-  card.appendChild(createEl("div", "game-lost-title", "Você perdeu!"));
-  card.appendChild(createEl("div", "game-lost-subtitle", "Sua sequência foi interrompida"));
+  card.appendChild(createEl("div", "game-lost-title", "Voc\u00ea perdeu!"));
+  card.appendChild(createEl("div", "game-lost-subtitle", "Sua sequ\u00eancia foi interrompida"));
   card.appendChild(createEl("div", "game-lost-streak", String(bestStreak)));
-  card.appendChild(createEl("div", "game-lost-streak-label", "melhor sequência"));
+  card.appendChild(createEl("div", "game-lost-streak-label", "melhor sequ\u00eancia"));
+
+  const xpContainer = createEl("div", "xp-popup");
+  card.appendChild(xpContainer);
 
   const btnsWrap = createEl("div", "game-lost-btns");
 
-  const restartBtn = createEl("button", "game-lost-btn game-lost-btn--restart", "Recomeçar");
+  const restartBtn = createEl("button", "game-lost-btn game-lost-btn--restart", "Recome\u00e7ar");
   restartBtn.addEventListener("click", () => {
     closeModePopup();
     onRestart();
@@ -129,6 +133,8 @@ export function showGameLostPopup(bestStreak, onRestart, onMenu) {
 
   document.body.appendChild(overlayEl);
   requestAnimationFrame(() => overlayEl.classList.add("show"));
+
+  if (xpPromise) showXPAnimation(xpPromise, xpContainer);
 }
 
 export function showCountryInfoPopup(id, hideFields) {
@@ -226,14 +232,15 @@ export function showGuidelinesPopup() {
 export function showEndGamePopup(title, subtitle, onRestart, onMenu) {
   closeModePopup();
 
+  let xpPromise = null;
   if (typeof window.__saveGameRecord === 'function' && game.currentGameMode) {
     const streakMatch = title.match(/(\d+)/);
     const subtitleMatch = subtitle && subtitle.match(/(\d+)\/(\d+)/);
     if (subtitleMatch) {
-      window.__saveGameRecord(game.currentGameMode, parseInt(subtitleMatch[1]), parseInt(subtitleMatch[2]), getElapsedSeconds());
+      xpPromise = window.__saveGameRecord(game.currentGameMode, parseInt(subtitleMatch[1]), parseInt(subtitleMatch[2]), getElapsedSeconds());
     } else if (streakMatch) {
       const streak = parseInt(streakMatch[1]);
-      window.__saveGameRecord(game.currentGameMode, streak, streak, getElapsedSeconds());
+      xpPromise = window.__saveGameRecord(game.currentGameMode, streak, streak, getElapsedSeconds());
     }
     game._recordSaved = true;
   }
@@ -243,6 +250,9 @@ export function showEndGamePopup(title, subtitle, onRestart, onMenu) {
   const card = createEl("div", "game-lost-card");
   card.appendChild(createEl("div", "game-lost-title", title));
   if (subtitle) card.appendChild(createEl("div", "game-lost-subtitle", subtitle));
+
+  const xpContainer = createEl("div", "xp-popup");
+  card.appendChild(xpContainer);
 
   const btnsWrap = createEl("div", "game-lost-btns");
 
@@ -265,6 +275,8 @@ export function showEndGamePopup(title, subtitle, onRestart, onMenu) {
 
   document.body.appendChild(overlayEl);
   requestAnimationFrame(() => overlayEl.classList.add("show"));
+
+  if (xpPromise) showXPAnimation(xpPromise, xpContainer);
 }
 
 export function showLandmarkInfoPopup(landmark, onClose) {
@@ -303,6 +315,186 @@ export function showLandmarkInfoPopup(landmark, onClose) {
 
   document.body.appendChild(overlayEl);
   requestAnimationFrame(() => overlayEl.classList.add("show"));
+}
+
+async function showXPAnimation(xpPromise, container) {
+  const xp = await xpPromise;
+  if (!xp || !container.isConnected) return;
+
+  container.style.position = "relative";
+  const valueEl = createEl("div", "xp-popup-value", `+${xp} XP`);
+  container.appendChild(valueEl);
+  container.appendChild(createEl("div", "xp-popup-label", "Experi\u00eancia ganha"));
+
+  // Particles
+  for (let i = 0; i < 7; i++) {
+    const p = createEl("div", "xp-particle");
+    p.style.left = `${40 + Math.random() * 20}%`;
+    p.style.top = "50%";
+    p.style.animationDelay = `${i * 0.08}s`;
+    container.appendChild(p);
+  }
+}
+
+export function showEndMatchPopup({ modeName, modeIcon, score, total, timeSeconds, extraStats, xpPromise, onRestart, onMenu }) {
+  closeModePopup();
+
+  overlayEl = createEl("div", "mode-popup-overlay");
+
+  const card = createEl("div", "end-match-card");
+
+  if (modeIcon) card.appendChild(createEl("div", "end-match-icon", modeIcon));
+  if (modeName) card.appendChild(createEl("div", "end-match-mode", modeName));
+
+  const isPerfect = total > 0 && score >= total;
+  card.appendChild(createEl("div", "end-match-title", isPerfect ? "Parab\u00e9ns!" : "Partida Finalizada"));
+
+  // Stats grid
+  const statsGrid = createEl("div", "end-match-stats");
+
+  const scoreStat = createEl("div", "end-match-stat");
+  scoreStat.appendChild(createEl("div", "end-match-stat-value", `${score}/${total}`));
+  scoreStat.appendChild(createEl("div", "end-match-stat-label", "Score"));
+  statsGrid.appendChild(scoreStat);
+
+  const timeStat = createEl("div", "end-match-stat");
+  timeStat.appendChild(createEl("div", "end-match-stat-value", formatMatchTime(timeSeconds)));
+  timeStat.appendChild(createEl("div", "end-match-stat-label", "Tempo"));
+  statsGrid.appendChild(timeStat);
+
+  if (extraStats) {
+    for (const [label, value] of extraStats) {
+      const stat = createEl("div", "end-match-stat");
+      stat.appendChild(createEl("div", "end-match-stat-value", String(value)));
+      stat.appendChild(createEl("div", "end-match-stat-label", label));
+      statsGrid.appendChild(stat);
+    }
+  }
+
+  card.appendChild(statsGrid);
+
+  // XP section
+  const xpSection = createEl("div", "end-match-xp-section");
+  const xpValueEl = createEl("div", "end-match-xp-value", "+0 XP");
+  xpSection.appendChild(xpValueEl);
+  xpSection.appendChild(createEl("div", "end-match-xp-label", "Experi\u00eancia ganha"));
+
+  const levelWrap = createEl("div", "end-match-level-wrap");
+  const levelTitle = createEl("div", "end-match-level-title", "");
+  const levelTrack = createEl("div", "end-match-level-track");
+  const levelFill = createEl("div", "end-match-level-fill");
+  levelFill.style.width = "0%";
+  levelTrack.appendChild(levelFill);
+  const levelPct = createEl("div", "end-match-level-pct", "");
+  levelWrap.appendChild(levelTitle);
+  levelWrap.appendChild(levelTrack);
+  levelWrap.appendChild(levelPct);
+  xpSection.appendChild(levelWrap);
+
+  card.appendChild(xpSection);
+
+  // Buttons
+  const btnsWrap = createEl("div", "end-match-btns");
+
+  const restartBtn = createEl("button", "end-match-btn end-match-btn--restart", "Jogar Novamente");
+  restartBtn.addEventListener("click", () => {
+    closeModePopup();
+    if (onRestart) onRestart();
+  });
+  btnsWrap.appendChild(restartBtn);
+
+  const menuBtn = createEl("button", "end-match-btn end-match-btn--menu", "Trocar M\u00f3dulo");
+  menuBtn.addEventListener("click", () => {
+    closeModePopup();
+    if (onMenu) onMenu();
+  });
+  btnsWrap.appendChild(menuBtn);
+
+  card.appendChild(btnsWrap);
+  overlayEl.appendChild(card);
+
+  overlayEl.addEventListener("click", (e) => {
+    if (e.target === overlayEl) closeModePopup();
+  });
+
+  document.body.appendChild(overlayEl);
+  requestAnimationFrame(() => overlayEl.classList.add("show"));
+
+  // Animate XP
+  if (xpPromise) {
+    xpPromise.then(xp => {
+      if (!xp || !xpValueEl.isConnected) return;
+      animateXPCounter(xpValueEl, xp, 1200);
+      setTimeout(() => spawnEndMatchParticles(xpSection, xpValueEl), 250);
+
+      // Update level info
+      try {
+        const { getLevelProgress, getLevelTitle } = window.__achFns || {};
+        if (getLevelProgress && getLevelTitle) {
+          const fetchCurrentXP = async () => {
+            try {
+              const res = await fetch('/api/records/stats', { credentials: 'include' });
+              if (!res.ok) return;
+              const data = await res.json();
+              const prog = getLevelProgress(data.totalXP);
+              levelTitle.textContent = `Nv.${prog.lvl} ${getLevelTitle(prog.lvl)}`;
+              levelPct.textContent = `${Math.round(prog.pct)}%`;
+              setTimeout(() => { levelFill.style.width = `${prog.pct}%`; }, 200);
+            } catch {}
+          };
+          fetchCurrentXP();
+        }
+      } catch {}
+    });
+  }
+}
+
+function spawnEndMatchParticles(container, sourceEl) {
+  container.style.position = 'relative';
+  container.style.overflow = 'visible';
+  const rect = sourceEl.getBoundingClientRect();
+  const parentRect = container.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2 - parentRect.left;
+  const cy = rect.top + rect.height / 2 - parentRect.top;
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const p = createEl('div', 'end-match-particle');
+    const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+    const dist = 35 + Math.random() * 50;
+    p.style.setProperty('--px', `${Math.cos(angle) * dist}px`);
+    p.style.setProperty('--py', `${Math.sin(angle) * dist}px`);
+    p.style.left = `${cx}px`;
+    p.style.top = `${cy}px`;
+    p.style.background = Math.random() > 0.4 ? '#f59e0b' : '#e8772e';
+    const size = 3 + Math.random() * 3;
+    p.style.width = `${size}px`;
+    p.style.height = `${size}px`;
+    p.style.animationDelay = `${i * 0.06}s`;
+    container.appendChild(p);
+  }
+}
+
+function animateXPCounter(element, target, duration) {
+  const start = performance.now();
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const value = Math.round(easeOutCubic(progress) * target);
+    element.textContent = `+${value} XP`;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+function formatMatchTime(seconds) {
+  if (!seconds) return "0s";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m}min ${s}s`;
+  return `${s}s`;
 }
 
 export function closeModePopup() {

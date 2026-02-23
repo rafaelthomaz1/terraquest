@@ -91,7 +91,6 @@ export function showRegisterScreen() {
   divider.appendChild(createEl('span', 'auth-divider-line'));
   divider.appendChild(createEl('span', 'auth-divider-text', 'ou'));
   divider.appendChild(createEl('span', 'auth-divider-line'));
-  card.appendChild(divider);
 
   const googleBtn = createEl('button', 'auth-btn-google');
   const googleIcon = createEl('img', 'auth-google-icon');
@@ -139,7 +138,13 @@ export function showRegisterScreen() {
 
     client.requestCode();
   });
-  card.appendChild(googleBtn);
+
+  getGoogleClientId().then((clientId) => {
+    if (clientId) {
+      card.insertBefore(divider, loginLink);
+      card.insertBefore(googleBtn, loginLink);
+    }
+  });
 
   const loginLink = createEl('div', 'auth-link');
   loginLink.appendChild(document.createTextNode('Já tem conta? '));

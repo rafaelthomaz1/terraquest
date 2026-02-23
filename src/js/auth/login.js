@@ -65,7 +65,6 @@ export function showLoginScreen() {
   divider.appendChild(createEl('span', 'auth-divider-line'));
   divider.appendChild(createEl('span', 'auth-divider-text', 'ou'));
   divider.appendChild(createEl('span', 'auth-divider-line'));
-  card.appendChild(divider);
 
   const googleBtn = createEl('button', 'auth-btn-google');
   const googleIcon = createEl('img', 'auth-google-icon');
@@ -76,7 +75,13 @@ export function showLoginScreen() {
   googleBtn.appendChild(googleIcon);
   googleBtn.appendChild(document.createTextNode('Entrar com Google'));
   googleBtn.addEventListener('click', () => initGoogleLogin());
-  card.appendChild(googleBtn);
+
+  getGoogleClientId().then((clientId) => {
+    if (clientId) {
+      card.insertBefore(divider, registerLink);
+      card.insertBefore(googleBtn, registerLink);
+    }
+  });
 
   const registerLink = createEl('div', 'auth-link');
   registerLink.appendChild(document.createTextNode('Não tem conta? '));

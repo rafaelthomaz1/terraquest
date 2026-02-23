@@ -101,10 +101,10 @@ export async function fetchRecords() {
 }
 
 export async function saveGameRecord(gameMode, score, total, timeSeconds) {
-  if (authState.isGuest || !authState.currentUser) return;
+  if (authState.isGuest || !authState.currentUser) return null;
 
   try {
-    await fetch('/api/records', {
+    const res = await fetch('/api/records', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -116,5 +116,10 @@ export async function saveGameRecord(gameMode, score, total, timeSeconds) {
       }),
     });
     authState.recordsCache = null;
-  } catch { /* ignore */ }
+    if (res.ok) {
+      const data = await res.json();
+      return data.xp_earned || 0;
+    }
+    return 0;
+  } catch { return 0; }
 }

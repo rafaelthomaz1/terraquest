@@ -6,7 +6,7 @@ import { initWorldMap, revealCountry } from './map/world-map.js';
 import { initContinentTracking, updateContinentCount } from './ui/score.js';
 import { initTheme } from './ui/theme.js';
 import { initDifficulty } from './ui/difficulty.js';
-import { navigateTo, handleInputKeydown, handleGiveUp, handleReviewBtn } from './ui/navigation.js';
+import { navigateTo, handleInputKeydown, handleGiveUp, handleReviewBtn, endCurrentMatch } from './ui/navigation.js';
 import { handleStatesGuess, statesGiveUp } from './modes/states-mode.js';
 import { flagsSkip } from './modes/world-flags.js';
 import { capitalsSkip } from './modes/world-capitals.js';
@@ -50,8 +50,11 @@ refs.restartBtnGo.addEventListener("click", () => { if (game.currentGameMode) na
 // Navigation
 document.getElementById("play-btn").addEventListener("click", () => navigateTo("select"));
 document.getElementById("guidelines-btn").addEventListener("click", () => showGuidelinesPopup());
+document.getElementById("achievements-btn").addEventListener("click", () => navigateTo("achievements"));
+document.getElementById("achievements-toggle").addEventListener("click", () => navigateTo("achievements"));
 document.getElementById("back-btn").addEventListener("click", () => navigateTo("home"));
 document.getElementById("menu-btn").addEventListener("click", () => navigateTo("select"));
+document.getElementById("end-match-btn").addEventListener("click", endCurrentMatch);
 document.getElementById("mode-switch-btn-v").addEventListener("click", () => navigateTo("select"));
 document.getElementById("mode-switch-btn-go").addEventListener("click", () => navigateTo("select"));
 
