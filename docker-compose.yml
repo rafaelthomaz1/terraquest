@@ -3,35 +3,42 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
-      - "443:443"
+    container_name: terraquest-app
     restart: unless-stopped
     depends_on:
       - api
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
+    expose:
+      - "80"
+    networks:
+      - terraquest_internal
+      - terraquest_external
 
   api:
     build:
       context: .
       dockerfile: Dockerfile.api
+    container_name: terraquest-api
     env_file: .env
     environment:
       - DB_PATH=/app/data/terraquest.db
+      - NODE_ENV=production
     volumes:
       - db_data:/app/data
     restart: unless-stopped
     expose:
       - "3001"
+    networks:
+      - terraquest_internal
+      - terraquest_external
 
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+networks:
+  terraquest_internal:
+    name: terraquest_internal
+    driver: bridge
+    internal: true
+  terraquest_external:
+    name: terraquest_external
+    driver: bridge
 
 volumes:
   db_data:
