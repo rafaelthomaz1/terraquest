@@ -155,10 +155,22 @@ const ACHIEVEMENTS = [
     check: s => ({ unlocked: s.totalXP >= 5000, progress: Math.min(s.totalXP, 5000), total: 5000 }) },
   { id: "xp-master", name: "XP Mestre", icon: "\u2728", desc: "Acumulou 20.000 XP!", hint: "Acumule 20.000 XP", category: "xp",
     check: s => ({ unlocked: s.totalXP >= 20000, progress: Math.min(s.totalXP, 20000), total: 20000 }) },
+  { id: "first-challenge", name: "Primeiro Desafio", icon: "\u2694\uFE0F", desc: "Completou 1 partida no Aventureiro!", hint: "Complete 1 partida no modo Aventureiro", category: "dificuldade",
+    check: s => { const d = s.diffMap["hard"]; const g = d?.games_played || 0; return { unlocked: g >= 1, progress: Math.min(g, 1), total: 1 }; } },
+  { id: "dedicated-adventurer", name: "Aventureiro Dedicado", icon: "\uD83C\uDFD4\uFE0F", desc: "10 partidas no Aventureiro!", hint: "Complete 10 partidas no modo Aventureiro", category: "dificuldade",
+    check: s => { const d = s.diffMap["hard"]; const g = d?.games_played || 0; return { unlocked: g >= 10, progress: Math.min(g, 10), total: 10 }; } },
+  { id: "geography-warrior", name: "Guerreiro da Geografia", icon: "\uD83D\uDEE1\uFE0F", desc: "50 partidas no Aventureiro!", hint: "Complete 50 partidas no modo Aventureiro", category: "dificuldade",
+    check: s => { const d = s.diffMap["hard"]; const g = d?.games_played || 0; return { unlocked: g >= 50, progress: Math.min(g, 50), total: 50 }; } },
+  { id: "persistent-explorer", name: "Explorador Persistente", icon: "\uD83D\uDDFA\uFE0F", desc: "10 partidas no Explorador!", hint: "Complete 10 partidas no modo Explorador", category: "dificuldade",
+    check: s => { const d = s.diffMap["easy"]; const g = d?.games_played || 0; return { unlocked: g >= 10, progress: Math.min(g, 10), total: 10 }; } },
+  { id: "xp-hunter", name: "Caçador de XP", icon: "\uD83D\uDCB0", desc: "1.000 XP no Aventureiro!", hint: "Acumule 1.000 XP no modo Aventureiro", category: "dificuldade",
+    check: s => { const d = s.diffMap["hard"]; const xp = d?.total_xp || 0; return { unlocked: xp >= 1000, progress: Math.min(xp, 1000), total: 1000 }; } },
+  { id: "versatile", name: "Versátil", icon: "\uD83C\uDFAF", desc: "Jogou em todos os 3 modos de dificuldade!", hint: "Jogue em todos os 3 modos de dificuldade", category: "dificuldade",
+    check: s => { const count = Object.keys(s.diffMap).length; return { unlocked: count >= 3, progress: Math.min(count, 3), total: 3 }; } },
   { id: "collector", name: "Colecionador", icon: "\uD83C\uDFC5", desc: "Desbloqueou 15 conquistas!", hint: "Desbloqueie 15 conquistas", category: "meta",
     check: () => ({ unlocked: false, progress: 0, total: 15 }) },
   { id: "geography-legend", name: "Lenda da Geografia", icon: "\uD83C\uDF0D", desc: "Desbloqueou todas as conquistas!", hint: "Desbloqueie todas as conquistas", category: "meta",
-    check: () => ({ unlocked: false, progress: 0, total: 32 }) }
+    check: () => ({ unlocked: false, progress: 0, total: 0 }) }
 ];
 
 const STREAK_MODE_IDS = [
@@ -215,9 +227,10 @@ function computeAchievements(stats) {
   if (collectorResult.unlocked) unlockedCount++;
   results.push({ ...collectorAch, ...collectorResult });
 
-  // Geography legend
+  // Geography legend (dynamic total = all achievements except itself)
   const legendAch = ACHIEVEMENTS.find(a => a.id === "geography-legend");
-  const legendResult = { unlocked: unlockedCount >= 31, progress: unlockedCount, total: 31 };
+  const legendTotal = ACHIEVEMENTS.length - 1;
+  const legendResult = { unlocked: unlockedCount >= legendTotal, progress: unlockedCount, total: legendTotal };
   results.push({ ...legendAch, ...legendResult });
 
   return results;
@@ -282,20 +295,22 @@ export async function showAchievementsScreen() {
 
   clearChildren(container);
 
-  const { totalXP, modeStats, overall, playDates } = data;
+  const { totalXP, modeStats, overall, playDates, difficultyStats } = data;
   const modeMap = {};
   for (const ms of modeStats) modeMap[ms.game_mode] = ms;
 
+  const diffMap = {};
+  if (difficultyStats) {
+    for (const ds of difficultyStats) diffMap[ds.difficulty] = ds;
+  }
+
   const streak = calculateStreak(playDates);
-  const stats = { totalXP, modeStats, modeMap, overall: overall || { total_games: 0, total_time: 0, modes_played: 0 }, streak, playDates };
+  const stats = { totalXP, modeStats, modeMap, diffMap, overall: overall || { total_games: 0, total_time: 0, modes_played: 0 }, streak, playDates };
   const { lvl, pct, cur, next } = getLevelProgress(totalXP);
   const title = getLevelTitle(lvl);
   const achievements = computeAchievements(stats);
   const skills = computeSkills(modeStats);
   const unlockedCount = achievements.filter(a => a.unlocked).length;
-
-  // Scroll wrapper
-  const scroll = createEl("div", "ach-scroll");
 
   // Back button
   const backBtn = createEl("button", "ach-back-btn", "\u2190 Voltar");
@@ -309,6 +324,50 @@ export async function showAchievementsScreen() {
     if (logoutBtn) logoutBtn.style.display = "";
   });
   container.appendChild(backBtn);
+
+  // Tab bar
+  const tabBar = createEl("div", "ach-tab-bar");
+  const tabAch = createEl("button", "ach-tab ach-tab--active", "\uD83C\uDFC5 Conquistas");
+  const tabRank = createEl("button", "ach-tab", "\uD83C\uDF0D Ranking Global");
+  tabBar.appendChild(tabAch);
+  tabBar.appendChild(tabRank);
+  container.appendChild(tabBar);
+
+  // Tab content areas
+  const achContent = createEl("div", "ach-tab-content");
+  achContent.style.display = "flex";
+  achContent.style.flexDirection = "column";
+  achContent.style.flex = "1";
+  achContent.style.overflow = "hidden";
+  achContent.style.width = "100%";
+  const rankContent = createEl("div", "ach-tab-content");
+  rankContent.style.display = "none";
+  rankContent.style.flexDirection = "column";
+  rankContent.style.flex = "1";
+  rankContent.style.overflow = "hidden";
+  rankContent.style.width = "100%";
+
+  let rankingLoaded = false;
+
+  tabAch.addEventListener("click", () => {
+    tabAch.classList.add("ach-tab--active");
+    tabRank.classList.remove("ach-tab--active");
+    achContent.style.display = "flex";
+    rankContent.style.display = "none";
+  });
+  tabRank.addEventListener("click", () => {
+    tabRank.classList.add("ach-tab--active");
+    tabAch.classList.remove("ach-tab--active");
+    rankContent.style.display = "flex";
+    achContent.style.display = "none";
+    if (!rankingLoaded) {
+      rankingLoaded = true;
+      loadRankingContent(rankContent);
+    }
+  });
+
+  // === ACHIEVEMENTS TAB CONTENT ===
+  const scroll = createEl("div", "ach-scroll");
 
   // Header
   const header = createEl("div", "ach-header");
@@ -432,14 +491,12 @@ export async function showAchievementsScreen() {
   // Achievements section
   scroll.appendChild(createEl("div", "ach-section-title", `Conquistas (${unlockedCount}/${achievements.length})`));
   const achGrid = createEl("div", "ach-badges-grid");
-  // Show unlocked first, then locked
   const sorted = [...achievements].sort((a, b) => (b.unlocked ? 1 : 0) - (a.unlocked ? 1 : 0));
   for (const a of sorted) {
     const badge = createEl("div", a.unlocked ? "ach-badge ach-badge--unlocked" : "ach-badge ach-badge--locked");
     badge.appendChild(createEl("div", "ach-badge-icon", a.unlocked ? a.icon : "\uD83D\uDD12"));
     badge.appendChild(createEl("div", "ach-badge-name", a.name));
 
-    // Tooltip
     const tooltip = createEl("div", "ach-badge-tooltip");
     if (a.unlocked) {
       tooltip.appendChild(createEl("div", "ach-tooltip-title", `${a.icon} ${a.name}`));
@@ -460,7 +517,108 @@ export async function showAchievementsScreen() {
   }
   scroll.appendChild(achGrid);
 
-  container.appendChild(scroll);
+  achContent.appendChild(scroll);
+  container.appendChild(achContent);
+  container.appendChild(rankContent);
+}
+
+const DIFFICULTY_NAMES = { learning: "Desbravador", easy: "Explorador", hard: "Aventureiro" };
+
+const STREAK_MODE_SET = new Set([
+  "world-silhouettes", "world-population", "world-area-game",
+  "world-flags-game", "world-capitals-game", "world-languages-game", "landmarks-game"
+]);
+
+function formatRankingScore(mode, score, total) {
+  if (STREAK_MODE_SET.has(mode)) return `\uD83D\uDD25 ${score}`;
+  if (mode === "world-where") return `${score} pts`;
+  if (mode === "world-walk") return `${score} passos`;
+  return `${score}/${total}`;
+}
+const DIFFICULTY_OPTIONS = [
+  { value: "learning", label: "\uD83E\uDDED Desbravador" },
+  { value: "easy", label: "\uD83D\uDDFA\uFE0F Explorador" },
+  { value: "hard", label: "\u2694\uFE0F Aventureiro" }
+];
+
+function buildModeOptions() {
+  const opts = [];
+  for (const [key, name] of Object.entries(MODE_NAMES)) {
+    opts.push({ value: key, label: name });
+  }
+  return opts;
+}
+
+async function loadRankingContent(container) {
+  clearChildren(container);
+  const rankScroll = createEl("div", "ach-scroll");
+
+  // Filters
+  const filters = createEl("div", "ranking-filters");
+
+  const modeSelect = document.createElement("select");
+  modeSelect.className = "ranking-select";
+  for (const opt of buildModeOptions()) {
+    const o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.label;
+    modeSelect.appendChild(o);
+  }
+  modeSelect.value = "world-type";
+
+  const diffSelect = document.createElement("select");
+  diffSelect.className = "ranking-select";
+  for (const opt of DIFFICULTY_OPTIONS) {
+    const o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.label;
+    diffSelect.appendChild(o);
+  }
+  diffSelect.value = "learning";
+
+  filters.appendChild(modeSelect);
+  filters.appendChild(diffSelect);
+  container.appendChild(filters);
+
+  const listContainer = createEl("div", "ranking-list");
+  rankScroll.appendChild(listContainer);
+  container.appendChild(rankScroll);
+
+  async function fetchRanking() {
+    clearChildren(listContainer);
+    listContainer.appendChild(createEl("div", "ach-loading", "Carregando ranking..."));
+    const params = new URLSearchParams();
+    if (modeSelect.value) params.set("game_mode", modeSelect.value);
+    if (diffSelect.value) params.set("difficulty", diffSelect.value);
+    try {
+      const res = await fetch(`/api/records/rankings?${params}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Erro');
+      const data = await res.json();
+      clearChildren(listContainer);
+      if (!data.rankings || data.rankings.length === 0) {
+        listContainer.appendChild(createEl("div", "ach-empty-msg", "Nenhum registro encontrado para estes filtros."));
+        return;
+      }
+      const selectedMode = modeSelect.value;
+      data.rankings.forEach((r, i) => {
+        const row = createEl("div", "ranking-row");
+        const posClass = i === 0 ? "ranking-pos ranking-pos--gold" : i === 1 ? "ranking-pos ranking-pos--silver" : i === 2 ? "ranking-pos ranking-pos--bronze" : "ranking-pos";
+        row.appendChild(createEl("span", posClass, `#${i + 1}`));
+        row.appendChild(createEl("span", "ranking-name", r.name));
+        row.appendChild(createEl("span", "ranking-score", formatRankingScore(selectedMode, r.best_score, r.total)));
+        row.appendChild(createEl("span", "ranking-time", formatTime(r.best_time)));
+        row.appendChild(createEl("span", "ranking-xp", `${r.xp_earned || 0} XP`));
+        listContainer.appendChild(row);
+      });
+    } catch {
+      clearChildren(listContainer);
+      listContainer.appendChild(createEl("div", "ach-error", "Erro ao carregar ranking."));
+    }
+  }
+
+  modeSelect.addEventListener("change", fetchRanking);
+  diffSelect.addEventListener("change", fetchRanking);
+  fetchRanking();
 }
 
 function createStatCard(icon, value, label) {

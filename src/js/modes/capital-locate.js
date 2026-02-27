@@ -7,13 +7,14 @@ import { shuffleArray } from '../utils/shuffle.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
 import { stopStopwatch } from '../ui/stopwatch.js';
-import { showModePopup } from '../ui/mode-popup.js';
+import { showModePopup, showGameLostPopup, showEndGamePopup } from '../ui/mode-popup.js';
 import { deduplicateFeatures } from '../utils/geo.js';
 
 let queue = [];
 let currentTarget = null;
 let correct = 0;
 let wrong = 0;
+let errors = 0;
 let totalRounds = 10;
 let dots = [];
 let mapMode = "world";
@@ -32,22 +33,17 @@ const CONTINENT_FILTER = {
   "world": null
 };
 
-const CONTINENT_BOUNDS = {
-  "africa": { center: [15, 20], scale: 400 },
-  "americas-n": { center: [-100, 55], scale: 350 },
-  "americas-c": { center: [-80, 15], scale: 500 },
-  "americas-s": { center: [-60, -15], scale: 350 },
-  "asia": { center: [90, 35], scale: 300 },
-  "europe": { center: [15, 52], scale: 500 },
-  "oceania": { center: [145, -25], scale: 400 }
-};
 
 export function showCapitalLocateMode(mode, continent, rounds) {
   mapMode = mode || "world";
-  totalRounds = rounds || 10;
+  const defaultRounds = (mapMode === "br" || mapMode === "us") ? 999 : 10;
+  totalRounds = rounds || defaultRounds;
   currentContinent = continent || null;
   correct = 0;
   wrong = 0;
+  errors = 0;
+  game._capitalLocateCorrect = 0;
+  game._capitalLocateTotal = totalRounds;
 
   const panel = document.getElementById("capital-locate-panel");
   panel.classList.add("active");
@@ -74,33 +70,52 @@ function setupWorldMap(continent) {
   queue = selected.slice();
   dots = selected.slice();
 
-  const width = container.clientWidth || 900;
-  const height = container.clientHeight || 500;
-
-  if (continent && continent !== "world" && CONTINENT_BOUNDS[continent]) {
-    const bounds = CONTINENT_BOUNDS[continent];
-    projection = d3.geoEquirectangular()
-      .center(bounds.center)
-      .scale(bounds.scale)
-      .translate([width / 2, height / 2]);
-  } else {
-    projection = d3.geoEquirectangular()
-      .fitExtent([[20, 20], [width - 20, height - 20]], { type: "Sphere" });
-  }
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const padding = 40;
 
   svgEl = d3.select(container).append("svg")
     .attr("width", width)
     .attr("height", height)
-    .style("background", "var(--ocean)")
-    .style("border-radius", "8px");
+    .style("background", "var(--ocean)");
 
   d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json").then(world => {
     const countries = topojson.feature(world, world.objects.countries);
     countries.features = deduplicateFeatures(countries.features);
+
+    let displayFeatures = countries.features;
+    if (contCode) {
+      displayFeatures = countries.features.filter(f => CONTINENTS[String(Number(f.id))] === contCode);
+    }
+
+    if (continent === "americas-n") {
+      projection = d3.geoEquirectangular()
+        .center([-95, 40])
+        .scale(Math.min(width, height) * 0.65)
+        .translate([width / 2, height / 2 + 40]);
+    } else if (continent === "oceania") {
+      projection = d3.geoEquirectangular()
+        .center([155, -25])
+        .scale(Math.min(width, height) * 0.7)
+        .translate([width / 2, height / 2 + 30]);
+    } else if (continent === "europe") {
+      projection = d3.geoEquirectangular()
+        .center([15, 52])
+        .scale(Math.min(width, height) * 0.85)
+        .translate([width / 2, height / 2 + 30]);
+    } else if (contCode) {
+      const fitTarget = { type: "FeatureCollection", features: displayFeatures };
+      projection = d3.geoEquirectangular()
+        .fitExtent([[padding, padding + 50], [width - padding, height - padding]], fitTarget);
+    } else {
+      projection = d3.geoEquirectangular()
+        .fitExtent([[padding, padding], [width - padding, height - padding]], { type: "Sphere" });
+    }
+
     const path = d3.geoPath().projection(projection);
 
     svgEl.append("g").selectAll("path")
-      .data(countries.features)
+      .data(displayFeatures)
       .enter().append("path")
       .attr("d", path)
       .attr("fill", "var(--country-fill)")
@@ -126,25 +141,31 @@ function setupStatesMap(country) {
   queue = selected.slice();
   dots = ids;
 
-  const width = container.clientWidth || 900;
-  const height = container.clientHeight || 500;
-  const topoUrl = country === "br"
-    ? "https://cdn.jsdelivr.net/npm/br-atlas@0.1.0/br-states.json"
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const dataUrl = country === "br"
+    ? "https://servicodados.ibge.gov.br/api/v3/malhas/paises/BR?formato=application/json&qualidade=intermediaria&intrarregiao=UF"
     : "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 
-  d3.json(topoUrl).then(topo => {
-    const obj = topo.objects[Object.keys(topo.objects)[0]];
-    const states = topojson.feature(topo, obj);
+  d3.json(dataUrl).then(data => {
+    let features;
+    if (country === "br") {
+      features = data.type === "FeatureCollection" ? data.features
+        : data.type === "Topology" ? topojson.feature(data, data.objects[Object.keys(data.objects)[0]]).features
+        : [];
+    } else {
+      features = topojson.feature(data, data.objects.states).features;
+    }
+    const states = { type: "FeatureCollection", features };
 
     projection = country === "br"
-      ? d3.geoMercator().fitExtent([[20, 20], [width - 20, height - 20]], states)
+      ? d3.geoMercator().fitExtent([[60, 80], [width - 60, height - 40]], states)
       : d3.geoAlbersUsa().fitExtent([[20, 20], [width - 20, height - 20]], states);
 
     svgEl = d3.select(container).append("svg")
       .attr("width", width)
       .attr("height", height)
-      .style("background", "var(--ocean)")
-      .style("border-radius", "8px");
+      .style("background", "var(--ocean)");
 
     const path = d3.geoPath().projection(projection);
 
@@ -232,17 +253,28 @@ function handleDotClick(id) {
 
   if (id === currentTarget) {
     correct++;
+    game._capitalLocateCorrect = correct;
     dot.attr("fill", "#22c55e").attr("r", 8).classed("dot-correct", true);
     dot.on("click", null);
     nextTarget();
   } else {
     wrong++;
+    errors++;
     const origFill = dot.attr("fill");
     dot.attr("fill", "#ef4444");
     setTimeout(() => {
       if (!dot.classed("dot-correct")) dot.attr("fill", origFill);
     }, 400);
     updateBanner();
+
+    const maxErrors = game.difficulty === "hard" ? 1 : game.difficulty === "easy" ? 2 : Infinity;
+    if (errors >= maxErrors) {
+      currentTarget = null;
+      setTimeout(() => {
+        showGameLostPopup(correct, () => showCapitalLocateMode(mapMode, currentContinent, totalRounds), () => navigateTo("select"));
+      }, 500);
+      return;
+    }
   }
 }
 
@@ -279,30 +311,11 @@ function endGame() {
   const skipBtn = document.getElementById("capital-locate-skip");
   if (skipBtn) skipBtn.remove();
 
-  const banner = document.getElementById("capital-locate-banner");
-  if (banner) banner.style.display = "none";
-
-  const container = document.getElementById("capital-locate-map");
-  clearChildren(container);
-
-  const result = createEl("div", "flag-click-result");
-  result.appendChild(createEl("div", "game-mode-country", `Fim! ${correct}/${totalRounds} acertos`));
-  if (wrong > 0) {
-    result.appendChild(createEl("div", "game-mode-question", `${wrong} erros`));
-  }
-
-  const btn = createEl("button", "restart-btn", "Jogar Novamente");
-  btn.addEventListener("click", () => {
-    const banner = document.getElementById("capital-locate-banner");
-    if (banner) banner.style.display = "flex";
-    navigateTo("game");
-  });
-  result.appendChild(btn);
-
-  const menuBtn = createEl("button", "mode-switch-btn", "Trocar M\u00f3dulo");
-  menuBtn.style.marginTop = "12px";
-  menuBtn.addEventListener("click", () => navigateTo("select"));
-  result.appendChild(menuBtn);
-
-  container.appendChild(result);
+  const subtitle = wrong > 0 ? `${correct}/${totalRounds} acertos, ${wrong} erros` : `${correct}/${totalRounds} acertos`;
+  showEndGamePopup(
+    "Fim!",
+    subtitle,
+    () => showCapitalLocateMode(mapMode, currentContinent, totalRounds),
+    () => navigateTo("select")
+  );
 }

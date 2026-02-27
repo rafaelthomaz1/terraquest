@@ -1,15 +1,17 @@
+import { game } from '../state.js';
 import { COUNTRIES, ISO_ALPHA2 } from '../data/countries.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
 import { stopStopwatch } from '../ui/stopwatch.js';
-import { showEndGamePopup } from '../ui/mode-popup.js';
+import { showEndGamePopup, showGameLostPopup } from '../ui/mode-popup.js';
 
 let queue = [];
 let allFlags = [];
 let currentTarget = null;
 let correct = 0;
 let wrong = 0;
+let errors = 0;
 let totalRounds = 30;
 
 export function showFlagClickGameMode(rounds) {
@@ -25,6 +27,9 @@ export function showFlagClickGameMode(rounds) {
   currentTarget = null;
   correct = 0;
   wrong = 0;
+  errors = 0;
+  game._flagClickCorrect = 0;
+  game._flagClickTotal = totalRounds;
 
   renderGrid();
   nextTarget();
@@ -67,14 +72,25 @@ function handleClick(id) {
 
   if (id === currentTarget) {
     correct++;
+    game._flagClickCorrect = correct;
     item.classList.add("flag-correct");
     item.style.pointerEvents = "none";
     nextTarget();
   } else {
     wrong++;
+    errors++;
     item.classList.add("flag-wrong-flash");
     setTimeout(() => item.classList.remove("flag-wrong-flash"), 400);
     updateHeader();
+
+    const maxErrors = game.difficulty === "hard" ? 1 : game.difficulty === "easy" ? 2 : Infinity;
+    if (errors >= maxErrors) {
+      currentTarget = null;
+      setTimeout(() => {
+        showGameLostPopup(correct, () => showFlagClickGameMode(totalRounds), () => navigateTo("select"));
+      }, 500);
+      return;
+    }
   }
 }
 

@@ -53,7 +53,6 @@
 <button id="menu-btn">MENU</button>
 <button id="end-match-btn" style="display:none">TERMINAR PARTIDA</button>
 <button id="theme-toggle" title="Alternar tema"><span id="theme-icon">&#x2600;&#xFE0F;</span><span id="theme-label">Modo Claro</span></button>
-<button id="difficulty-toggle" title="Alternar dificuldade"><span id="difficulty-label">&#x1F7E2; Modo F&#xE1;cil</span><span class="difficulty-tooltip"><b>&#x1F7E2; Modo F&#xE1;cil</b>: segunda chance nos modos game. <b>&#x1F534; Modo Dif&#xED;cil</b>: sem segunda chance — erre e o streak zera. <b>&#x1F4D6; Aprendizado</b>: sem elimina&#xE7;&#xE3;o — jogue sem parar para praticar.</span></button>
 <button id="achievements-toggle" style="display:none" title="Minhas Conquistas"><span>&#x1F3C6;</span><span id="achievements-toggle-label">CONQUISTAS</span></button>
 </div>
 
@@ -71,8 +70,10 @@
 </div>
 
 <div id="achievements-screen"></div>
+<div id="admin-screen"></div>
 
 <div id="stopwatch">00:00</div>
+<div id="difficulty-badge"></div>
 
 <div id="select-screen">
   <button class="back-btn" id="back-btn">&larr; Voltar</button>
@@ -321,6 +322,68 @@
   <div id="biomes-map"></div>
 </div>
 
+<script>
+// DEV MOCK — intercepta fetch para testar sem backend
+(function(){
+  if (location.hostname !== 'localhost') return;
+  const _fetch = window.fetch;
+  const MOCK = {
+    '/api/auth/me': { user: { id: 1, name: 'Dev Tester', email: 'dev@test.com' }, isAdmin: false },
+    '/api/auth/config': { googleClientId: '' },
+    '/api/records': { records: {} },
+    '/api/records/stats': {
+      totalXP: 4820,
+      modeStats: [
+        { game_mode:'world-type', games_played:25, best_score:142, best_total:195, best_time:540, total_time:9800, mode_xp:1200 },
+        { game_mode:'world-click', games_played:18, best_score:120, best_total:195, best_time:620, total_time:7200, mode_xp:800 },
+        { game_mode:'world-flags', games_played:12, best_score:180, best_total:195, best_time:480, total_time:5400, mode_xp:960 },
+        { game_mode:'world-capitals', games_played:8, best_score:95, best_total:195, best_time:700, total_time:4000, mode_xp:500 },
+        { game_mode:'world-silhouettes', games_played:15, best_score:32, best_total:32, best_time:300, total_time:3600, mode_xp:480 },
+        { game_mode:'world-population', games_played:10, best_score:22, best_total:22, best_time:250, total_time:2000, mode_xp:350 },
+        { game_mode:'br-states', games_played:6, best_score:27, best_total:27, best_time:180, total_time:1200, mode_xp:280 },
+        { game_mode:'us-states', games_played:3, best_score:40, best_total:51, best_time:420, total_time:900, mode_xp:250 }
+      ],
+      overall: { total_games: 97, total_time: 34100, modes_played: 8 },
+      playDates: (function(){
+        var d=[]; var t=new Date(); for(var i=0;i<7;i++){
+          d.push(new Date(t.getTime()-i*86400000).toISOString().slice(0,10));
+        } return d;
+      })(),
+      difficultyStats: [
+        { difficulty:'learning', games_played:20, best_score:142, total_xp:800 },
+        { difficulty:'easy', games_played:45, best_score:180, total_xp:2400 },
+        { difficulty:'hard', games_played:32, best_score:120, total_xp:1620 }
+      ]
+    },
+    '/api/records/rankings': {
+      rankings: [
+        { name:'Maria S.', best_score:195, total:195, best_time:420, xp_earned:400 },
+        { name:'João S.', best_score:190, total:195, best_time:480, xp_earned:380 },
+        { name:'Dev T.', best_score:180, total:195, best_time:540, xp_earned:360 },
+        { name:'Ana C.', best_score:175, total:195, best_time:560, xp_earned:340 },
+        { name:'Pedro L.', best_score:168, total:195, best_time:600, xp_earned:320 },
+        { name:'Lucas O.', best_score:155, total:195, best_time:620, xp_earned:300 },
+        { name:'Carla S.', best_score:142, total:195, best_time:700, xp_earned:280 },
+        { name:'Felipe R.', best_score:130, total:195, best_time:750, xp_earned:260 },
+        { name:'Bruna A.', best_score:118, total:195, best_time:800, xp_earned:240 },
+        { name:'Rafael D.', best_score:100, total:195, best_time:850, xp_earned:200 }
+      ]
+    },
+    '/api/analytics/pageview': { ok: true }
+  };
+  window.fetch = function(url, opts) {
+    var path = typeof url === 'string' ? url.split('?')[0] : '';
+    if (MOCK[path]) {
+      return Promise.resolve({ ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(JSON.stringify(MOCK[path]))); } });
+    }
+    if (path === '/api/records' && opts && opts.method === 'POST') {
+      return Promise.resolve({ ok:true, status:201, json:function(){ return Promise.resolve({ ok:true, xp_earned:42 }); } });
+    }
+    return _fetch.apply(this, arguments);
+  };
+  console.log('%c[MOCK] API mock ativo — dados de teste carregados', 'color:#22c55e;font-weight:bold');
+})();
+</script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://d3js.org/d3.v7.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>

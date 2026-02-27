@@ -6,6 +6,8 @@ import {
   statesShowFeedback, statesUpdateScore, statesUpdateRegionCount, buildRegionLegend,
   revealState, loadStatesMap
 } from '../map/states-map.js';
+import { showEndGamePopup } from '../ui/mode-popup.js';
+import { navigateTo } from '../ui/navigation.js';
 
 export function showStatesMode(country, quizMode) {
   statesState.quizMode = quizMode;
@@ -58,17 +60,12 @@ export function handleStatesGuess() {
   if (statesState.found.size >= getStatesTotal()) {
     statesState.gameOver = true;
     setTimeout(() => {
-      document.getElementById("go-score").textContent = statesState.found.size;
-      const bd = document.getElementById("gameover-breakdown");
-      clearChildren(bd);
-      const rc = getRegionColors();
-      Object.keys(statesState.regionTotals).forEach(r => {
-        bd.appendChild(createBreakdownItem(rc[r], r, `${statesState.regionFound[r]}/${statesState.regionTotals[r]}`));
-      });
-      document.getElementById("gameover-content").querySelector("h1").textContent = "Parab\u00e9ns!";
-      document.getElementById("gameover-content").querySelector(".go-label").textContent = `de ${getStatesTotal()} estados aprendidos`;
-      refs.gameoverOverlay.style.display = "flex";
-      requestAnimationFrame(() => { refs.gameoverOverlay.classList.add("show"); });
+      showEndGamePopup(
+        "Parabéns!",
+        `${statesState.found.size}/${getStatesTotal()} acertos`,
+        () => navigateTo("game"),
+        () => navigateTo("select")
+      );
     }, 600);
   }
 }
@@ -105,19 +102,14 @@ export function statesGiveUp() {
     document.getElementById("review-legend").style.display = "flex";
 
     statesState._reviewHandler = () => {
-      document.getElementById("go-score").textContent = statesState.found.size;
-      const bd = document.getElementById("gameover-breakdown");
-      clearChildren(bd);
-      const rc = getRegionColors();
-      Object.keys(statesState.regionTotals).forEach(r => {
-        bd.appendChild(createBreakdownItem(rc[r], r, `${statesState.regionFound[r]}/${statesState.regionTotals[r]}`));
-      });
-      document.getElementById("gameover-content").querySelector("h1").textContent = "Sessão Concluída";
-      document.getElementById("gameover-content").querySelector(".go-label").textContent = `de ${getStatesTotal()} estados estudados`;
       document.getElementById("review-btn").style.display = "none";
       document.getElementById("review-legend").style.display = "none";
-      refs.gameoverOverlay.style.display = "flex";
-      requestAnimationFrame(() => { refs.gameoverOverlay.classList.add("show"); });
+      showEndGamePopup(
+        "Sessão Concluída",
+        `${statesState.found.size}/${getStatesTotal()} acertos`,
+        () => navigateTo("game"),
+        () => navigateTo("select")
+      );
     };
   }, waveTime);
 }

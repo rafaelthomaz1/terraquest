@@ -24,9 +24,17 @@ import { clearChildren, createBreakdownItem } from '../utils/dom.js';
 import { hideBridgeLines } from '../map/world-map.js';
 import { startStopwatch, resetStopwatch, getElapsedSeconds } from '../ui/stopwatch.js';
 import { showAchievementsScreen, hideAchievementsScreen, MODE_NAMES, getLevelProgress, getLevelTitle } from '../ui/achievements.js';
-import { showEndMatchPopup } from '../ui/mode-popup.js';
+import { showAdminScreen } from '../ui/admin.js';
+import { showEndMatchPopup, showEndGamePopup } from '../ui/mode-popup.js';
+import { showDifficultyPopup, showDifficultyBadge, hideDifficultyBadge } from '../ui/difficulty.js';
+import { trackScreenEnter } from '../analytics/tracker.js';
 
 const TOTAL = 195;
+
+function hideAdminScreen_silent() {
+  const el = document.getElementById('admin-screen');
+  if (el) el.style.display = 'none';
+}
 
 let typingInterval = null;
 
@@ -127,6 +135,7 @@ function autoSaveCurrentGame() {
 export function navigateTo(screen) {
   autoSaveCurrentGame();
   game.currentScreen = screen;
+  trackScreenEnter(screen);
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("register-screen").style.display = "none";
   document.getElementById("home-screen").style.display = "none";
@@ -134,71 +143,82 @@ export function navigateTo(screen) {
   document.getElementById("menu-btn").style.display = "none";
   document.getElementById("end-match-btn").style.display = "none";
   hideAchievementsScreen();
+  hideAdminScreen_silent();
   hideAllGameUI();
 
-  const diffToggle = document.getElementById("difficulty-toggle");
   const themeToggle = document.getElementById("theme-toggle");
   const logoutBtn = document.getElementById("logout-btn");
   const achToggle = document.getElementById("achievements-toggle");
   const achBtn = document.getElementById("achievements-btn");
+  const adminBtn = document.getElementById("admin-btn");
   const isAuth = authState.currentUser && !authState.isGuest;
 
   if (typingInterval) { clearInterval(typingInterval); typingInterval = null; }
 
   if (screen === "login") {
     document.getElementById("login-screen").style.display = "flex";
-    diffToggle.style.display = "none";
     themeToggle.style.display = "none";
     logoutBtn.style.display = "none";
     achToggle.style.display = "none";
     if (achBtn) achBtn.style.display = "none";
+    if (adminBtn) adminBtn.style.display = "none";
     resetStopwatch();
   } else if (screen === "register") {
     document.getElementById("register-screen").style.display = "flex";
-    diffToggle.style.display = "none";
     themeToggle.style.display = "none";
     logoutBtn.style.display = "none";
     achToggle.style.display = "none";
     if (achBtn) achBtn.style.display = "none";
+    if (adminBtn) adminBtn.style.display = "none";
     resetStopwatch();
   } else if (screen === "home") {
     document.getElementById("home-screen").style.display = "flex";
-    diffToggle.style.display = "none";
     themeToggle.style.display = "";
     logoutBtn.style.display = "";
     achToggle.style.display = "none";
     if (achBtn) achBtn.style.display = isAuth ? "flex" : "none";
+    if (adminBtn) adminBtn.style.display = authState.isAdmin ? "block" : "none";
     resetStopwatch();
     startSubtitleTyping();
   } else if (screen === "select") {
     document.getElementById("select-screen").style.display = "flex";
-    diffToggle.style.display = "flex";
     themeToggle.style.display = "";
     logoutBtn.style.display = "";
     achToggle.style.display = isAuth ? "" : "none";
     if (achBtn) achBtn.style.display = "none";
+    if (adminBtn) adminBtn.style.display = authState.isAdmin ? "block" : "none";
     resetStopwatch();
   } else if (screen === "game") {
     document.getElementById("end-match-btn").style.display = "block";
-    diffToggle.style.display = "flex";
     themeToggle.style.display = "";
     logoutBtn.style.display = "none";
     achToggle.style.display = "none";
     if (achBtn) achBtn.style.display = "none";
+    if (adminBtn) adminBtn.style.display = "none";
     startStopwatch();
     startGameMode(game.currentGameMode);
+    showDifficultyPopup().then(() => showDifficultyBadge());
   } else if (screen === "achievements") {
-    diffToggle.style.display = "none";
     themeToggle.style.display = "";
     logoutBtn.style.display = "none";
     achToggle.style.display = "none";
     if (achBtn) achBtn.style.display = "none";
+    if (adminBtn) adminBtn.style.display = "none";
     resetStopwatch();
     showAchievementsScreen();
+  } else if (screen === "admin") {
+    themeToggle.style.display = "";
+    logoutBtn.style.display = "none";
+    achToggle.style.display = "none";
+    if (achBtn) achBtn.style.display = "none";
+    if (adminBtn) adminBtn.style.display = "none";
+    resetStopwatch();
+    showAdminScreen();
   }
 }
 
 function hideAllGameUI() {
+  hideDifficultyBadge();
   document.getElementById("world-panel").style.display = "none";
   document.getElementById("top-bar").style.display = "none";
   document.getElementById("progress-container").style.display = "none";
@@ -264,7 +284,7 @@ function startGameMode(mode) {
     case "world-walk": showWorldWalkMode(); break;
     case "world-silhouettes": showWorldSilhouettesMode(); break;
     case "world-population": showWorldPopulationMode(rounds); break;
-    case "world-where": showWorldWhereMode(); break;
+    case "world-where": if (rounds) whereIsState.totalRounds = rounds; showWorldWhereMode(); break;
     case "world-flags-game": showWorldFlagsGameMode(); break;
     case "world-capitals-game": showWorldCapitalsGameMode(); break;
     case "world-languages-game": showWorldLanguagesGameMode(); break;
@@ -353,9 +373,59 @@ export function handleGiveUp() {
   worldTypeGiveUp();
 }
 
+function buildExtraData(mode) {
+  const extra = {};
+  switch (mode) {
+    case "world-click":
+      extra.incorrect = clickState.incorrect;
+      extra.skipped = clickState.skipped;
+      break;
+    case "world-flags":
+      extra.skipped = flagsState.skipped;
+      break;
+    case "world-capitals":
+      extra.skipped = capitalsState.skipped;
+      break;
+    case "world-silhouettes":
+      extra.streak = silhouetteState.streak;
+      break;
+    case "world-population":
+      extra.streak = populationState.streak;
+      extra.pairsPlayed = populationState.currentPairIndex;
+      break;
+    case "world-area-game":
+      extra.streak = areaState.streak;
+      extra.totalRounds = areaState.totalRounds;
+      break;
+    case "world-where":
+      extra.rounds = whereIsState.round;
+      extra.totalRounds = whereIsState.totalRounds;
+      break;
+    case "flag-click-game":
+      extra.correct = game._flagClickCorrect || 0;
+      extra.total = game._flagClickTotal || 0;
+      break;
+    case "world-capital-locate":
+    case "br-capital-locate":
+    case "us-capital-locate":
+      extra.correct = game._capitalLocateCorrect || 0;
+      extra.total = game._capitalLocateTotal || 0;
+      break;
+    case "br-biomes":
+    case "br-vegetation":
+    case "br-climate":
+      extra.correct = game._biomesCorrect || 0;
+      extra.total = game._biomesTotal || 0;
+      break;
+  }
+  return Object.keys(extra).length > 0 ? extra : null;
+}
+
 function trySaveRecord(mode, score, total) {
   if (typeof window.__saveGameRecord === 'function') {
-    window.__saveGameRecord(mode, score, total, getElapsedSeconds());
+    const diff = game.difficulty || null;
+    const extra = buildExtraData(mode);
+    window.__saveGameRecord(mode, score, total, getElapsedSeconds(), diff, extra);
     game._recordSaved = true;
   }
 }
@@ -411,6 +481,12 @@ export function endCurrentMatch() {
       const bs = game._bestStreak || 0;
       score = bs; total = bs; break;
     }
+    case "flag-click-game":
+      score = game._flagClickCorrect || 0; total = game._flagClickTotal || 0; break;
+    case "world-capital-locate": case "br-capital-locate": case "us-capital-locate":
+      score = game._capitalLocateCorrect || 0; total = game._capitalLocateTotal || 0; break;
+    case "br-biomes": case "br-vegetation": case "br-climate":
+      score = game._biomesCorrect || 0; total = game._biomesTotal || 0; break;
     default: return;
   }
 
@@ -421,7 +497,9 @@ export function endCurrentMatch() {
   // Save record
   let xpPromise = null;
   if (typeof window.__saveGameRecord === 'function' && !game._recordSaved) {
-    xpPromise = window.__saveGameRecord(mode, score, total, timeSeconds);
+    const diff = game.difficulty || null;
+    const extra = buildExtraData(mode);
+    xpPromise = window.__saveGameRecord(mode, score, total, timeSeconds, diff, extra);
     game._recordSaved = true;
   }
 
@@ -489,17 +567,14 @@ export function handleReviewBtn(e) {
     refs.gameoverOverlay.style.display = "flex";
     requestAnimationFrame(() => { refs.gameoverOverlay.classList.add("show"); });
   } else if (currentGameMode === "world-type") {
-    trySaveRecord("world-type", game.found.size, TOTAL);
-    document.getElementById("go-score").textContent = game.found.size;
-    const bd = document.getElementById("gameover-breakdown");
-    clearChildren(bd);
-    Object.keys(continentTracking.totals).forEach(c => {
-      bd.appendChild(createBreakdownItem(CONTINENT_COLORS[c], CONTINENT_NAMES[c], `${continentTracking.found[c]}/${continentTracking.totals[c]}`));
-    });
     document.getElementById("review-btn").style.display = "none";
     document.getElementById("review-legend").style.display = "none";
-    refs.gameoverOverlay.style.display = "flex";
-    requestAnimationFrame(() => { refs.gameoverOverlay.classList.add("show"); });
+    showEndGamePopup(
+      "Sessão Concluída",
+      `${game.found.size}/${TOTAL} acertos`,
+      () => navigateTo("game"),
+      () => navigateTo("select")
+    );
   } else if (statesState._reviewHandler) {
     e.stopImmediatePropagation();
     statesState._reviewHandler();

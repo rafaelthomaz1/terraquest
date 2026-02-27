@@ -1,14 +1,16 @@
+import { game } from '../state.js';
 import { BR_BIOMES, BR_VEGETATION, BR_CLIMATES, BR_BIOME_PATHS, BR_VEGETATION_PATHS, BR_CLIMATE_PATHS, BR_OUTLINE } from '../data/br-biomes.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { createEl, clearChildren } from '../utils/dom.js';
 import { navigateTo } from '../ui/navigation.js';
 import { stopStopwatch } from '../ui/stopwatch.js';
-import { showEndGamePopup } from '../ui/mode-popup.js';
+import { showEndGamePopup, showGameLostPopup } from '../ui/mode-popup.js';
 
 let queue = [];
 let currentTarget = null;
 let correct = 0;
 let wrong = 0;
+let errors = 0;
 let subMode = "biomes"; // "biomes" | "vegetation" | "climate"
 let totalItems = 0;
 
@@ -22,6 +24,7 @@ export function showBrBiomesMode(mode) {
   subMode = mode || "biomes";
   correct = 0;
   wrong = 0;
+  errors = 0;
 
   const panel = document.getElementById("biomes-panel");
   panel.classList.add("active");
@@ -32,6 +35,8 @@ export function showBrBiomesMode(mode) {
   queue = ids.slice();
   totalItems = ids.length;
   currentTarget = null;
+  game._biomesCorrect = 0;
+  game._biomesTotal = totalItems;
 
   renderMap();
   nextTarget();
@@ -55,30 +60,31 @@ function renderMap() {
   outline.setAttribute("stroke-width", "2");
   svgEl.appendChild(outline);
 
-  // Region paths
+  // Region paths — sem cor, padrão do app
   items.forEach(item => {
     const d = paths[item.id];
     if (!d) return;
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("d", d);
-    path.setAttribute("fill", item.color);
-    path.setAttribute("fill-opacity", "0.7");
-    path.setAttribute("stroke", "var(--border)");
+    path.setAttribute("fill", "var(--country-fill)");
+    path.setAttribute("fill-opacity", "1");
+    path.setAttribute("stroke", "var(--country-stroke)");
     path.setAttribute("stroke-width", "1");
     path.setAttribute("data-id", item.id);
+    path.setAttribute("data-color", item.color);
     path.setAttribute("class", "biome-region");
     path.style.cursor = "pointer";
-    path.style.transition = "fill-opacity 0.3s, stroke-width 0.3s";
+    path.style.transition = "fill 0.3s, stroke 0.3s, stroke-width 0.3s";
     path.addEventListener("click", () => handleRegionClick(item.id));
     path.addEventListener("mouseenter", () => {
       if (!path.classList.contains("biome-correct")) {
-        path.setAttribute("fill-opacity", "0.9");
-        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke", "var(--accent)");
+        path.setAttribute("stroke-width", "2.5");
       }
     });
     path.addEventListener("mouseleave", () => {
       if (!path.classList.contains("biome-correct")) {
-        path.setAttribute("fill-opacity", "0.7");
+        path.setAttribute("stroke", "var(--country-stroke)");
         path.setAttribute("stroke-width", "1");
       }
     });
@@ -107,26 +113,35 @@ function handleRegionClick(id) {
 
   if (id === currentTarget) {
     correct++;
+    game._biomesCorrect = correct;
     region.classList.add("biome-correct");
-    region.setAttribute("fill-opacity", "1");
+    region.setAttribute("fill", region.getAttribute("data-color"));
+    region.setAttribute("fill-opacity", "0.7");
     region.setAttribute("stroke", "#22c55e");
     region.setAttribute("stroke-width", "3");
     region.style.cursor = "default";
     nextTarget();
   } else {
     wrong++;
-    const origFill = region.getAttribute("fill-opacity");
-    region.setAttribute("fill-opacity", "0.3");
+    errors++;
     region.setAttribute("stroke", "#ef4444");
     region.setAttribute("stroke-width", "3");
     setTimeout(() => {
       if (!region.classList.contains("biome-correct")) {
-        region.setAttribute("fill-opacity", origFill);
-        region.setAttribute("stroke", "var(--border)");
+        region.setAttribute("stroke", "var(--country-stroke)");
         region.setAttribute("stroke-width", "1");
       }
     }, 400);
     updateBanner();
+
+    const maxErrors = game.difficulty === "hard" ? 1 : game.difficulty === "easy" ? 2 : Infinity;
+    if (errors >= maxErrors) {
+      currentTarget = null;
+      setTimeout(() => {
+        showGameLostPopup(correct, () => showBrBiomesMode(subMode), () => navigateTo("select"));
+      }, 500);
+      return;
+    }
   }
 }
 

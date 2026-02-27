@@ -2,9 +2,10 @@ import { game, whereIsState, worldMap } from '../state.js';
 import { COUNTRIES, CONTINENTS, CONTINENT_COLORS, ISO_ALPHA2 } from '../data/countries.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { createEl, clearChildren } from '../utils/dom.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
 import { refs } from '../state.js';
 import { revealCountry } from '../map/world-map.js';
+import { showEndGamePopup } from '../ui/mode-popup.js';
 
 const MAX_DIST = 6000;
 
@@ -177,15 +178,12 @@ function endWhere() {
   document.getElementById("where-round-result").classList.remove("active");
 
   const maxPoints = whereIsState.totalRounds * 1000;
-  document.getElementById("gameover-content").querySelector("h1").textContent = "Resultado";
-  document.getElementById("go-score").textContent = whereIsState.totalPoints;
-  document.getElementById("gameover-content").querySelector(".go-label").textContent =
-    `de ${maxPoints} pontos poss\u00edveis`;
-  const bd = document.getElementById("gameover-breakdown");
-  clearChildren(bd);
-
-  refs.gameoverOverlay.style.display = "flex";
-  requestAnimationFrame(() => refs.gameoverOverlay.classList.add("show"));
+  showEndGamePopup(
+    "Resultado",
+    `${whereIsState.totalPoints}/${maxPoints} pontos`,
+    () => navigateTo("game"),
+    () => navigateTo("select")
+  );
 }
 
 export function cleanupWhere() {

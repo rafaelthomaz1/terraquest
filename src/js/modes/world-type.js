@@ -5,7 +5,8 @@ import { normalize } from '../utils/normalize.js';
 import { showFeedbackMsg } from '../utils/dom.js';
 import { revealCountry } from '../map/world-map.js';
 import { updateScore, updateContinentCount } from '../ui/score.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
+import { showEndGamePopup } from '../ui/mode-popup.js';
 
 const TOTAL = 195;
 
@@ -51,7 +52,9 @@ export function handleGuess() {
 
   if (game.found.size >= TOTAL) {
     game.gameOver = true;
-    setTimeout(() => refs.victoryOverlay.classList.add("show"), 600);
+    setTimeout(() => {
+      showEndGamePopup("Parabéns!", `${TOTAL}/${TOTAL} acertos`, () => navigateTo("game"), () => navigateTo("select"));
+    }, 600);
   }
 }
 

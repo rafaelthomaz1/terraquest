@@ -5,7 +5,8 @@ import { buildAdjacencyGraph } from '../data/borders.js';
 import { normalize } from '../utils/normalize.js';
 import { showFeedbackMsg } from '../utils/dom.js';
 import { revealCountry, showBridgeLines } from '../map/world-map.js';
-import { resetGame } from '../ui/navigation.js';
+import { resetGame, navigateTo } from '../ui/navigation.js';
+import { showGameLostPopup } from '../ui/mode-popup.js';
 
 function bfs(adjacency, start, end) {
   if (start === end) return [start];
@@ -102,6 +103,7 @@ export function showWorldWalkMode() {
   walkState.pathIds = new Set();
   walkState.frontierIds = new Set();
   walkState.steps = 0;
+  walkState.errors = 0;
   walkState.gameOver = false;
   walkState.connected = false;
   walkState.shortestPath = [];
@@ -183,10 +185,21 @@ export function handleWalkGuess() {
   }
 
   if (!walkState.frontierIds.has(id)) {
+    walkState.errors++;
     showFeedbackMsg(refs.feedback, `${COUNTRIES[id]} não faz fronteira com o caminho!`, "red");
     refs.inputContainer.classList.add("shake");
     setTimeout(() => refs.inputContainer.classList.remove("shake"), 500);
     refs.input.value = "";
+
+    const maxErrors = game.difficulty === "hard" ? 1 : game.difficulty === "easy" ? 2 : Infinity;
+    if (walkState.errors >= maxErrors) {
+      walkState.gameOver = true;
+      refs.input.disabled = true;
+      refs.giveUpBtn.disabled = true;
+      setTimeout(() => {
+        showGameLostPopup(walkState.steps, () => showWorldWalkMode(), () => navigateTo("select"));
+      }, 600);
+    }
     return;
   }
 

@@ -2,14 +2,24 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { dbHelper } from '../db.js';
+import { getClientIp, lookupGeo } from '../utils/geo.js';
 
 const router = Router();
+const ADMIN_EMAIL = 'rafaelthomaz887@gmail.com';
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   'postmessage'
 );
+
+function logLoginEvent(userId, method, req) {
+  const ip = getClientIp(req);
+  const { country, city } = lookupGeo(ip);
+  dbHelper.prepare(
+    'INSERT INTO login_events (user_id, method, ip_address, country, city, success) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(userId, method, ip, country, city, true).catch(err => console.error('Login event error:', err));
+}
 
 router.post('/register', async (req, res) => {
   try {
@@ -23,19 +33,20 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Senha deve ter pelo menos 6 caracteres' });
     }
 
-    const existing = dbHelper.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    const existing = await dbHelper.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existing) {
       return res.status(409).json({ error: 'Email já cadastrado' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const result = dbHelper.prepare(
+    const result = await dbHelper.prepare(
       'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)'
     ).run(name, email, passwordHash);
 
     req.session.userId = result.lastInsertRowid;
+    logLoginEvent(result.lastInsertRowid, 'register', req);
 
-    const user = dbHelper.prepare('SELECT id, name, email, picture FROM users WHERE id = ?').get(result.lastInsertRowid);
+    const user = await dbHelper.prepare('SELECT id, name, email, picture FROM users WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json({ user });
   } catch (err) {
     console.error('Register error:', err);
@@ -51,7 +62,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    const user = dbHelper.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = await dbHelper.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (!user || !user.password_hash) {
       return res.status(401).json({ error: 'Email ou senha incorretos' });
     }
@@ -62,6 +73,7 @@ router.post('/login', async (req, res) => {
     }
 
     req.session.userId = user.id;
+    logLoginEvent(user.id, 'email', req);
     res.json({ user: { id: user.id, name: user.name, email: user.email, picture: user.picture } });
   } catch (err) {
     console.error('Login error:', err);
@@ -86,22 +98,23 @@ router.post('/google', async (req, res) => {
     const payload = ticket.getPayload();
     const { sub: googleId, email, name, picture } = payload;
 
-    let user = dbHelper.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
+    let user = await dbHelper.prepare('SELECT * FROM users WHERE google_id = ?').get(googleId);
 
     if (!user) {
-      const existingByEmail = dbHelper.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      const existingByEmail = await dbHelper.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (existingByEmail) {
-        dbHelper.prepare('UPDATE users SET google_id = ?, picture = ? WHERE id = ?').run(googleId, picture, existingByEmail.id);
-        user = dbHelper.prepare('SELECT * FROM users WHERE id = ?').get(existingByEmail.id);
+        await dbHelper.prepare('UPDATE users SET google_id = ?, picture = ? WHERE id = ?').run(googleId, picture, existingByEmail.id);
+        user = await dbHelper.prepare('SELECT * FROM users WHERE id = ?').get(existingByEmail.id);
       } else {
-        const result = dbHelper.prepare(
+        const result = await dbHelper.prepare(
           'INSERT INTO users (name, email, google_id, picture) VALUES (?, ?, ?, ?)'
         ).run(name, email, googleId, picture);
-        user = dbHelper.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+        user = await dbHelper.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
       }
     }
 
     req.session.userId = user.id;
+    logLoginEvent(user.id, 'google', req);
     res.json({ user: { id: user.id, name: user.name, email: user.email, picture: user.picture } });
   } catch (err) {
     console.error('Google auth error:', err.message || err);
@@ -112,17 +125,17 @@ router.post('/google', async (req, res) => {
   }
 });
 
-router.get('/me', (req, res) => {
+router.get('/me', async (req, res) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Não autenticado' });
   }
 
-  const user = dbHelper.prepare('SELECT id, name, email, picture FROM users WHERE id = ?').get(req.session.userId);
+  const user = await dbHelper.prepare('SELECT id, name, email, picture FROM users WHERE id = ?').get(req.session.userId);
   if (!user) {
     return res.status(401).json({ error: 'Usuário não encontrado' });
   }
 
-  res.json({ user });
+  res.json({ user, isAdmin: user.email === ADMIN_EMAIL });
 });
 
 router.get('/config', (req, res) => {

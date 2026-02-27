@@ -97,7 +97,7 @@ export function showGameLostPopup(bestStreak, onRestart, onMenu) {
 
   let xpPromise = null;
   if (typeof window.__saveGameRecord === 'function' && game.currentGameMode) {
-    xpPromise = window.__saveGameRecord(game.currentGameMode, bestStreak, bestStreak, getElapsedSeconds());
+    xpPromise = window.__saveGameRecord(game.currentGameMode, bestStreak, bestStreak, getElapsedSeconds(), game.difficulty || null, null);
     game._recordSaved = true;
   }
 
@@ -236,11 +236,12 @@ export function showEndGamePopup(title, subtitle, onRestart, onMenu) {
   if (typeof window.__saveGameRecord === 'function' && game.currentGameMode) {
     const streakMatch = title.match(/(\d+)/);
     const subtitleMatch = subtitle && subtitle.match(/(\d+)\/(\d+)/);
+    const diff = game.difficulty || null;
     if (subtitleMatch) {
-      xpPromise = window.__saveGameRecord(game.currentGameMode, parseInt(subtitleMatch[1]), parseInt(subtitleMatch[2]), getElapsedSeconds());
+      xpPromise = window.__saveGameRecord(game.currentGameMode, parseInt(subtitleMatch[1]), parseInt(subtitleMatch[2]), getElapsedSeconds(), diff, null);
     } else if (streakMatch) {
       const streak = parseInt(streakMatch[1]);
-      xpPromise = window.__saveGameRecord(game.currentGameMode, streak, streak, getElapsedSeconds());
+      xpPromise = window.__saveGameRecord(game.currentGameMode, streak, streak, getElapsedSeconds(), diff, null);
     }
     game._recordSaved = true;
   }

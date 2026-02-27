@@ -7,8 +7,12 @@ services:
     restart: unless-stopped
     depends_on:
       - api
-    expose:
-      - "80"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     networks:
       - terraquest_internal
       - terraquest_external
@@ -20,16 +24,47 @@ services:
     container_name: terraquest-api
     env_file: .env
     environment:
-      - DB_PATH=/app/data/terraquest.db
       - NODE_ENV=production
-    volumes:
-      - db_data:/app/data
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-terraquest}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-terraquest}
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     expose:
       - "3001"
     networks:
       - terraquest_internal
       - terraquest_external
+
+  db:
+    image: postgres:16-alpine
+    container_name: terraquest-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-terraquest}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-terraquest}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-terraquest}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    expose:
+      - "5432"
+    networks:
+      - terraquest_internal
+
+  certbot:
+    image: certbot/certbot
+    container_name: terraquest-certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
   terraquest_internal:
@@ -41,4 +76,4 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:
+  pg_data:

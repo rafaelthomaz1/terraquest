@@ -6,6 +6,7 @@ export async function getCurrentUser() {
     if (!res.ok) return null;
     const data = await res.json();
     authState.currentUser = data.user;
+    authState.isAdmin = !!data.isAdmin;
     return data.user;
   } catch {
     return null;
@@ -60,6 +61,7 @@ export async function logout() {
   } catch { /* ignore */ }
   authState.currentUser = null;
   authState.isGuest = false;
+  authState.isAdmin = false;
   authState.recordsCache = null;
 }
 
@@ -100,20 +102,25 @@ export async function fetchRecords() {
   }
 }
 
-export async function saveGameRecord(gameMode, score, total, timeSeconds) {
+export async function saveGameRecord(gameMode, score, total, timeSeconds, difficulty, extraData) {
   if (authState.isGuest || !authState.currentUser) return null;
+  if (!score || score <= 0) return 0;
 
   try {
+    const body = {
+      game_mode: gameMode,
+      score,
+      total,
+      time_seconds: timeSeconds,
+    };
+    if (difficulty) body.difficulty = difficulty;
+    if (extraData) body.extra_data = extraData;
+
     const res = await fetch('/api/records', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({
-        game_mode: gameMode,
-        score,
-        total,
-        time_seconds: timeSeconds,
-      }),
+      body: JSON.stringify(body),
     });
     authState.recordsCache = null;
     if (res.ok) {

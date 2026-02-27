@@ -5,7 +5,7 @@ import { COUNTRIES, CONTINENTS, CONTINENT_COLORS } from './data/countries.js';
 import { initWorldMap, revealCountry } from './map/world-map.js';
 import { initContinentTracking, updateContinentCount } from './ui/score.js';
 import { initTheme } from './ui/theme.js';
-import { initDifficulty } from './ui/difficulty.js';
+import { loadDifficulty } from './ui/difficulty.js';
 import { navigateTo, handleInputKeydown, handleGiveUp, handleReviewBtn, endCurrentMatch } from './ui/navigation.js';
 import { handleStatesGuess, statesGiveUp } from './modes/states-mode.js';
 import { flagsSkip } from './modes/world-flags.js';
@@ -17,6 +17,7 @@ import { showModePopup, showGuidelinesPopup } from './ui/mode-popup.js';
 import { skipFlagClick } from './modes/flag-click-game.js';
 import { getCurrentUser, logout, fetchRecords, saveGameRecord } from './auth/auth.js';
 import { showLoginScreen } from './auth/login.js';
+import { trackPageView } from './analytics/tracker.js';
 
 // Initialize DOM references
 initRefs();
@@ -38,8 +39,8 @@ initWorldMap();
 // Init theme
 initTheme();
 
-// Init difficulty toggle
-initDifficulty();
+// Load saved difficulty
+loadDifficulty();
 
 // Event listeners
 refs.input.addEventListener("keydown", handleInputKeydown);
@@ -73,7 +74,7 @@ const CATEGORIES = {
     title: "Bandeiras",
     subtitle: "Escolha um modo de jogo",
     options: [
-      { label: "Bandeiras", value: "world-flags-map", icon: "\uD83D\uDDFA\uFE0F", desc: "Encontre pa\u00edses no mapa pela bandeira", noRecord: true },
+      { label: "Bandeiras Game", value: "world-flags-game", icon: "\uD83C\uDFAE", desc: "Teste com m\u00faltipla escolha" },
       { label: "Clicar na Bandeira", value: "flag-click-game", icon: "\uD83D\uDC46", desc: "Grid de bandeiras - clique na correta", noRecord: true }
     ]
   },
@@ -81,7 +82,7 @@ const CATEGORIES = {
     title: "Capitais e Cidades",
     subtitle: "Escolha um modo de jogo",
     options: [
-      { label: "Capitais", value: "world-capitals-map", icon: "\uD83D\uDDFA\uFE0F", desc: "Digite as capitais no mapa interativo", noRecord: true },
+      { label: "Capitais Game", value: "world-capitals-game", icon: "\uD83C\uDFAE", desc: "Teste com m\u00faltipla escolha" },
       { label: "Localizar Capitais", value: "world-capital-locate", icon: "\uD83D\uDCCD", desc: "Clique no ponto da capital no mapa", noRecord: true },
       { label: "Pontos Tur\u00edsticos", value: "landmarks-game", icon: "\uD83C\uDFDB\uFE0F", desc: "Adivinhe a cidade e pa\u00eds do landmark" }
     ]
@@ -99,8 +100,7 @@ const CATEGORIES = {
     options: [
       { label: "Silhuetas", value: "world-silhouettes", icon: "\uD83D\uDDFA\uFE0F", desc: "Identifique pa\u00edses pelo contorno" },
       { label: "Popula\u00e7\u00e3o", value: "population-menu", icon: "\uD83D\uDC65", desc: "Desafios de popula\u00e7\u00e3o", noRecord: true },
-      { label: "Maior em \u00c1rea", value: "area-menu", icon: "\uD83D\uDCCF", desc: "Desafios de territ\u00f3rio", noRecord: true },
-      { label: "Menor Dist\u00e2ncia", value: "world-where", icon: "\uD83C\uDFAF", desc: "Clique o mais perto poss\u00edvel", noRecord: true }
+      { label: "Maior em \u00c1rea", value: "area-menu", icon: "\uD83D\uDCCF", desc: "Desafios de territ\u00f3rio", noRecord: true }
     ]
   },
   "study-br": {
@@ -181,28 +181,6 @@ async function handleCategoryClick(category) {
       return;
     }
 
-    if (chosen === "world-flags-map") {
-      showModePopup("Bandeiras", "Escolha como praticar", [
-        { label: "Mapa", value: "world-flags", icon: "\uD83D\uDDFA\uFE0F", desc: "Encontre no mapa mundial interativo" },
-        { label: "Game", value: "world-flags-game", icon: "\uD83C\uDFAE", desc: "Teste com m\u00faltipla escolha" }
-      ], (sub) => {
-        game.currentGameMode = sub;
-        navigateTo("game");
-      });
-      return;
-    }
-
-    if (chosen === "world-capitals-map") {
-      showModePopup("Capitais", "Escolha como praticar", [
-        { label: "Mapa", value: "world-capitals", icon: "\uD83D\uDDFA\uFE0F", desc: "Digite as capitais no mapa" },
-        { label: "Game", value: "world-capitals-game", icon: "\uD83C\uDFAE", desc: "Teste com m\u00faltipla escolha" }
-      ], (sub) => {
-        game.currentGameMode = sub;
-        navigateTo("game");
-      });
-      return;
-    }
-
     if (chosen === "world-languages-map") {
       showModePopup("L\u00ednguas", "Escolha como praticar", [
         { label: "Mapa", value: "world-languages", icon: "\uD83D\uDDFA\uFE0F", desc: "Encontre no mapa pelo idioma" },
@@ -222,13 +200,13 @@ async function handleCategoryClick(category) {
     if (chosen === "world-capital-locate") {
       showModePopup("Localizar Capitais", "Escolha a regi\u00e3o", [
         { label: "Mundo", value: "world", icon: "\uD83C\uDF0D", desc: "Todos os pa\u00edses", noRecord: true },
-        { label: "\u00c1frica", value: "africa", icon: "\uD83C\uDF0D", desc: "Capitais africanas", noRecord: true },
-        { label: "Am\u00e9rica do Norte", value: "americas-n", icon: "\uD83C\uDF0E", desc: "Canad\u00e1, EUA, M\u00e9xico...", noRecord: true },
-        { label: "Am\u00e9rica Central", value: "americas-c", icon: "\uD83C\uDF0E", desc: "Caribe e Am\u00e9rica Central", noRecord: true },
-        { label: "Am\u00e9rica do Sul", value: "americas-s", icon: "\uD83C\uDF0E", desc: "Capitais sul-americanas", noRecord: true },
+        { label: "\u00c1frica", value: "africa", icon: "\uD83E\uDD81", desc: "Capitais africanas", noRecord: true },
+        { label: "Am\u00e9rica do Norte", value: "americas-n", icon: "\uD83D\uDDFD", desc: "Canad\u00e1, EUA, M\u00e9xico...", noRecord: true },
+        { label: "Am\u00e9rica Central", value: "americas-c", icon: "\uD83C\uDF34", desc: "Caribe e Am\u00e9rica Central", noRecord: true },
+        { label: "Am\u00e9rica do Sul", value: "americas-s", icon: "\u26F0\uFE0F", desc: "Capitais sul-americanas", noRecord: true },
         { label: "Europa", value: "europe", icon: "\uD83C\uDFF0", desc: "Capitais europeias", noRecord: true },
-        { label: "\u00c1sia", value: "asia", icon: "\uD83C\uDF0F", desc: "Capitais asi\u00e1ticas", noRecord: true },
-        { label: "Oceania", value: "oceania", icon: "\uD83C\uDF0F", desc: "Capitais da Oceania", noRecord: true }
+        { label: "\u00c1sia", value: "asia", icon: "\u26E9\uFE0F", desc: "Capitais asi\u00e1ticas", noRecord: true },
+        { label: "Oceania", value: "oceania", icon: "\uD83C\uDFDD\uFE0F", desc: "Capitais da Oceania", noRecord: true }
       ], (continent) => {
         game._pendingContinent = continent;
         handleRoundsPopup("world-capital-locate", "Capitais");
@@ -465,7 +443,16 @@ window.__saveGameRecord = saveGameRecord;
 // Auth check and start
 (async () => {
   const user = await getCurrentUser();
+  trackPageView();
   if (user) {
+    if (authState.isAdmin) {
+      const adminBtn = document.createElement("button");
+      adminBtn.id = "admin-btn";
+      adminBtn.textContent = "ADMIN";
+      adminBtn.addEventListener("click", () => navigateTo("admin"));
+      document.getElementById("top-right-controls").appendChild(adminBtn);
+      window.__adminNav = { navigateTo };
+    }
     navigateTo("home");
   } else {
     showLoginScreen();

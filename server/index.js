@@ -1,10 +1,15 @@
 import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
 import cors from 'cors';
-import { initDb } from './db.js';
+import { initDb, pool } from './db.js';
 import authRoutes from './routes/auth.js';
 import recordsRoutes from './routes/records.js';
+import analyticsRoutes from './routes/analytics.js';
+import adminRoutes from './routes/admin.js';
+
+const PgStore = connectPgSimple(session);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,6 +27,10 @@ if (isProd) {
 }
 
 app.use(session({
+  store: new PgStore({
+    pool,
+    createTableIfMissing: true,
+  }),
   secret: process.env.SESSION_SECRET || 'terraquest-dev-secret',
   resave: false,
   saveUninitialized: false,
@@ -35,6 +44,8 @@ app.use(session({
 
 app.use('/api/auth', authRoutes);
 app.use('/api/records', recordsRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 (async () => {
   await initDb();

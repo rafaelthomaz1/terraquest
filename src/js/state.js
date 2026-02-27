@@ -4,6 +4,7 @@
 export const authState = {
   currentUser: null,
   isGuest: false,
+  isAdmin: false,
   recordsCache: null,
 };
 
